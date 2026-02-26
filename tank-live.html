@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IRON COMMAND — Commander Station</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="physics.js"></script>
+<style>
+:root {
+  --g:#39ff14; --g2:rgba(57,255,20,0.6); --g3:rgba(57,255,20,0.12);
+  --amber:#ffb000; --red:#ff2020; --blue:#00d4ff; --pink:#ff69b4;
+  --bg:#020602; --bg2:#050905; --bg3:#08110a; --panel:#060e06;
+  --border:rgba(57,255,20,0.22); --border2:rgba(57,255,20,0.1);
+  --glow:0 0 12px rgba(57,255,20,0.6),0 0 28px rgba(57,255,20,0.25);
+  --glow-sm:0 0 6px rgba(57,255,20,0.45);
+  --font:'Share Tech Mono',monospace;
+  --hud:'Orbitron',sans-serif;
+  --ui:'Rajdhani',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:var(--font);color:var(--g);}
+
+/* Scanlines */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 4px);pointer-events:none;z-index:9999;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.6) 100%);pointer-events:none;z-index:9998;}
+
+/* ── LAYOUT ── */
+#app{width:100%;height:100vh;display:grid;grid-template-rows:48px 1fr 28px;grid-template-columns:260px 1fr 280px;}
+#topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:100;}
+#left-col{grid-row:2;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:12px;}
+#center-col{grid-row:2;position:relative;overflow:hidden;}
+#right-col{grid-row:2;background:var(--bg2);border-left:1px solid var(--border);overflow-y:auto;padding:12px;}
+#statusbar{grid-column:1/-1;background:rgba(57,255,20,0.07);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:16px;font-size:0.55rem;letter-spacing:0.12em;z-index:100;}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:#020602}::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* ── TOP BAR ── */
+.tb-logo{font-family:var(--hud);font-size:0.95rem;font-weight:900;letter-spacing:0.2em;text-shadow:var(--glow);white-space:nowrap;}
+.tb-tag{font-size:0.6rem;letter-spacing:0.2em;color:var(--g2);text-transform:uppercase;}
+.tb-sep{width:1px;height:28px;background:var(--border);flex-shrink:0;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:14px;}
+#tb-clock{font-family:var(--hud);font-size:0.85rem;font-weight:700;color:var(--g);text-shadow:var(--glow-sm);letter-spacing:0.1em;}
+.alert-badge{font-size:0.62rem;letter-spacing:0.15em;padding:3px 10px;border:1px solid;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);}
+.badge-ok{border-color:var(--g);color:var(--g);background:var(--g3);}
+.badge-warn{border-color:var(--amber);color:var(--amber);background:rgba(255,176,0,0.1);animation:blink 1.5s step-end infinite;}
+.badge-red{border-color:var(--red);color:var(--red);background:rgba(255,32,32,0.1);animation:blink 0.6s step-end infinite;}
+
+/* ── PANELS ── */
+.pnl{background:var(--panel);border:1px solid var(--border2);padding:12px;margin-bottom:10px;position:relative;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));}
+.pnl::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--g),transparent);opacity:0.3;}
+.pnl-title{font-family:var(--hud);font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--g);text-shadow:var(--glow-sm);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.pnl-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* ── STAT TILES ── */
+.tile{background:var(--bg3);border:1px solid var(--border2);padding:8px 10px;position:relative;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%);}
+.tile-label{font-size:0.52rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--g2);margin-bottom:3px;}
+.tile-val{font-family:var(--hud);font-size:1.3rem;font-weight:700;color:var(--g);text-shadow:var(--glow-sm);line-height:1;}
+.tile-unit{font-size:0.52rem;color:rgba(57,255,20,0.4);}
+.tile.amber .tile-val{color:var(--amber);text-shadow:0 0 8px var(--amber);}
+.tile.blue  .tile-val{color:var(--blue); text-shadow:0 0 8px var(--blue);}
+.tile.red   .tile-val{color:var(--red);  text-shadow:0 0 8px var(--red);}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:8px;}
+
+/* ── GAUGES ── */
+.g-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.g-label{font-size:0.58rem;color:var(--g2);min-width:90px;letter-spacing:0.06em;}
+.g-bar{flex:1;height:4px;background:var(--border2);overflow:hidden;}
+.g-fill{height:100%;transition:width 0.6s ease;}
+.g-val{font-size:0.6rem;color:var(--g);min-width:50px;text-align:right;}
+
+/* ── TERM LOG ── */
+.term{background:var(--bg);border:1px solid var(--border2);padding:8px;max-height:130px;overflow-y:auto;font-size:0.65rem;line-height:1.8;}
+.tl-ok{color:var(--g)}.tl-warn{color:var(--amber)}.tl-err{color:var(--red)}.tl-info{color:var(--blue)}
+
+/* ── MAIN MAP CANVAS ── */
+#main-canvas{position:absolute;inset:0;width:100%;height:100%;}
+
+/* ── BALLISTICS INPUT FORM ── */
+.field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
+.field label{font-size:0.55rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--g2);}
+.field input,.field select{background:var(--bg3);border:1px solid var(--border2);color:var(--g);font-family:var(--font);font-size:0.75rem;padding:5px 8px;outline:none;transition:border 0.2s;clip-path:polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,0 100%);}
+.field input:focus,.field select:focus{border-color:var(--g);}
+.field select option{background:var(--bg);}
+
+.btn{font-family:var(--font);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:7px 14px;background:transparent;border:1px solid var(--border);color:var(--g);cursor:pointer;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);transition:all 0.2s;}
+.btn:hover{background:var(--g3);box-shadow:var(--glow);}
+.btn-fire{border-color:var(--red);color:var(--red);}
+.btn-fire:hover{background:rgba(255,32,32,0.15);box-shadow:0 0 16px rgba(255,32,32,0.4);}
+
+/* ── RESULT BOX ── */
+.result{background:var(--bg);border:1px solid var(--border);padding:10px;margin-top:8px;font-size:0.68rem;line-height:1.9;}
+.r-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--border2);padding:1px 0;}
+.r-row:last-child{border:none;padding-top:4px;}
+.r-k{color:var(--g2)}.r-v{color:var(--g);font-weight:bold;}
+.r-v.amber{color:var(--amber)}.r-v.red{color:var(--red)}.r-v.blue{color:var(--blue)}
+
+/* ── TRAJECTORY CANVAS ── */
+#traj-canvas{width:100%;height:120px;border:1px solid var(--border2);background:var(--bg);}
+
+/* ── THREAT TABLE ── */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:0.52rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--g2);border-bottom:1px solid var(--border2);padding:4px 6px;text-align:left;}
+.tbl td{padding:6px 6px;border-bottom:1px solid var(--border2);font-size:0.68rem;}
+.tbl tr:hover td{background:var(--g3);}
+
+/* ── MAP OVERLAYS ── */
+.map-overlay{position:absolute;pointer-events:none;}
+#map-grid-label{top:8px;left:8px;font-size:0.58rem;letter-spacing:0.15em;color:var(--g2);}
+#map-scale-bar{bottom:12px;left:50%;transform:translateX(-50%);font-size:0.55rem;color:var(--g2);text-align:center;}
+#map-cursor{top:8px;right:8px;font-size:0.58rem;color:var(--g2);letter-spacing:0.1em;}
+
+/* ── SENSOR FEED ── */
+#sensor-feed{font-size:0.58rem;line-height:2;color:rgba(57,255,20,0.7);}
+.sf-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--border2);padding:2px 0;}
+.sf-key{color:var(--g2)}.sf-val{color:var(--g);font-weight:bold;}
+.sf-val.live{animation:live-pulse 2s ease infinite;}
+.sf-val.amber{color:var(--amber)}.sf-val.red{color:var(--red)}
+
+/* ── CHART WRAP ── */
+.chart-wrap{position:relative;height:160px;margin-top:6px;}
+.chart-wrap-sm{position:relative;height:120px;margin-top:6px;}
+
+/* ── ANIMATIONS ── */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes live-pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fade-in 0.3s ease;}
+
+/* ── STATUS BAR ── */
+.sb-sep{color:rgba(57,255,20,0.2);}
+#sb-mode{color:var(--g);font-weight:bold;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── TOP BAR ── -->
+<div id="topbar">
+  <div class="tb-logo">⊕ IRON COMMAND</div>
+  <div class="tb-tag">Commander Station v2.0</div>
+  <div class="tb-sep"></div>
+  <span id="tb-badge" class="alert-badge badge-ok">SYS NOMINAL</span>
+  <div class="tb-right">
+    <span style="font-size:0.6rem;color:var(--g2);" id="tb-sensor">📱 Awaiting mobile link...</span>
+    <div id="tb-clock">00:00:00</div>
+  </div>
+</div>
+
+<!-- ── LEFT COLUMN ── -->
+<div id="left-col">
+
+  <!-- Live Sensor Feed from mobile -->
+  <div class="pnl">
+    <div class="pnl-title">📱 Mobile Tank Feed</div>
+    <div id="sensor-feed">
+      <div class="sf-row"><span class="sf-key">STATUS</span><span class="sf-val amber" id="sf-status">AWAITING LINK</span></div>
+      <div class="sf-row"><span class="sf-key">HEADING</span><span class="sf-val live" id="sf-heading">—°</span></div>
+      <div class="sf-row"><span class="sf-key">ELEVATION</span><span class="sf-val live" id="sf-elev">—°</span></div>
+      <div class="sf-row"><span class="sf-key">ROLL</span><span class="sf-val live" id="sf-roll">—°</span></div>
+      <div class="sf-row"><span class="sf-key">G-FORCE</span><span class="sf-val live" id="sf-gforce">—G</span></div>
+      <div class="sf-row"><span class="sf-key">SPEED</span><span class="sf-val live" id="sf-speed">—km/h</span></div>
+      <div class="sf-row"><span class="sf-key">GPS LAT</span><span class="sf-val live" id="sf-lat">—</span></div>
+      <div class="sf-row"><span class="sf-key">GPS LON</span><span class="sf-val live" id="sf-lon">—</span></div>
+      <div class="sf-row"><span class="sf-key">BATTERY</span><span class="sf-val live" id="sf-bat">—%</span></div>
+      <div class="sf-row"><span class="sf-key">AMMO</span><span class="sf-val" id="sf-ammo">—</span></div>
+      <div class="sf-row"><span class="sf-key">HITS</span><span class="sf-val" id="sf-hits">0</span></div>
+    </div>
+    <button class="btn" style="margin-top:10px;width:100%;" onclick="simulateMobileLink()">🔗 Simulate Link</button>
+  </div>
+
+  <!-- Systems Status -->
+  <div class="pnl">
+    <div class="pnl-title">⚙ Systems Status</div>
+    <div id="sys-list"></div>
+  </div>
+
+  <!-- Combat log -->
+  <div class="pnl">
+    <div class="pnl-title">📋 Combat Log</div>
+    <div class="term" id="combat-log">
+      <div class="tl-info">[BOOT] Commander Station online</div>
+      <div class="tl-ok">[OK] All stations nominal</div>
+    </div>
+    <button class="btn" style="margin-top:6px;" onclick="clearLog()">⊘ Clear</button>
+  </div>
+
+</div>
+
+<!-- ── CENTER: TACTICAL MAP ── -->
+<div id="center-col">
+  <canvas id="main-canvas"></canvas>
+  <div class="map-overlay" id="map-grid-label">TACTICAL GRID — SECTOR 7</div>
+  <div class="map-overlay" id="map-cursor">CURSOR: —</div>
+  <div class="map-overlay" id="map-scale-bar">Scale: 500m/div | Click to place waypoint</div>
+</div>
+
+<!-- ── RIGHT COLUMN ── -->
+<div id="right-col">
+
+  <!-- Ballistics Calculator -->
+  <div class="pnl">
+    <div class="pnl-title">⦿ Fire Control Calc</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Ammo Type</label>
+        <select id="r-ammo" onchange="calcFCS()">
+          <option value="apfsds">APFSDS</option>
+          <option value="heat">HEAT</option>
+          <option value="he">HE-FRAG</option>
+          <option value="hesh">HESH</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Elevation °</label>
+        <input type="number" id="r-elev" value="3.5" step="0.1" oninput="calcFCS()"/>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Tgt Speed m/s</label>
+        <input type="number" id="r-tspd" value="10" oninput="calcFCS()"/>
+      </div>
+      <div class="field">
+        <label>Tgt Armor mm</label>
+        <input type="number" id="r-tarmor" value="600" oninput="calcFCS()"/>
+      </div>
+    </div>
+    <button class="btn btn-fire" onclick="calcFCS()">⦿ COMPUTE SOLUTION</button>
+
+    <div id="fcs-result" class="result">
+      <div class="r-row"><span class="r-k">// Awaiting computation</span></div>
+    </div>
+
+    <!-- Trajectory canvas -->
+    <canvas id="traj-canvas" height="120"></canvas>
+    <div style="font-size:0.55rem;color:var(--g2);text-align:right;margin-top:2px;" id="traj-info">—</div>
+  </div>
+
+  <!-- Penetration vs range chart -->
+  <div class="pnl">
+    <div class="pnl-title">📊 Pen vs Range</div>
+    <div class="chart-wrap-sm"><canvas id="chartPen"></canvas></div>
+  </div>
+
+  <!-- Threat assessment -->
+  <div class="pnl">
+    <div class="pnl-title">⚠ Threat Matrix</div>
+    <table class="tbl">
+      <thead><tr><th>Target</th><th>Armor</th><th>Range</th><th>P(Kill)</th></tr></thead>
+      <tbody id="threat-tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ── STATUS BAR ── -->
+<div id="statusbar">
+  <span id="sb-mode">◉ STANDBY</span>
+  <span class="sb-sep">│</span>
+  <span id="sb-ammo">APFSDS</span>
+  <span class="sb-sep">│</span>
+  <span id="sb-time">00:00:00</span>
+  <span class="sb-sep">│</span>
+  <span id="sb-grid">GRID: —</span>
+  <span class="sb-sep">│</span>
+  <span id="sb-physics">physics.js loaded</span>
+</div>
+</div>
+
+<!-- ════════════════════ JAVASCRIPT ════════════════════ -->
+<script>
+'use strict';
+
+/* ── CLOCK ── */
+function startClock() {
+  function tick() {
+    const t = new Date().toLocaleTimeString('en',{hour12:false});
+    document.getElementById('tb-clock').textContent = t;
+    document.getElementById('sb-time').textContent  = t;
+  }
+  tick(); setInterval(tick,1000);
+}
+startClock();
+
+/* ── SYSTEMS STATUS ── */
+const SYSTEMS = [
+  {name:'Main FCS',     pct:98, status:'ok'},
+  {name:'APS System',   pct:100,status:'ok'},
+  {name:'Comm Link',    pct:45, status:'warn'},
+  {name:'GPS/Nav',      pct:92, status:'ok'},
+  {name:'Engine',       pct:100,status:'ok'},
+  {name:'Tracks',       pct:100,status:'ok'},
+  {name:'ERA Panels',   pct:75, status:'warn'},
+  {name:'NBC Filter',   pct:100,status:'ok'},
+];
+
+function buildSystems() {
+  const list = document.getElementById('sys-list');
+  list.innerHTML = SYSTEMS.map(s => {
+    const col = s.status==='ok'?'var(--g)':s.status==='warn'?'var(--amber)':'var(--red)';
+    return `<div class="g-row">
+      <span class="g-label" style="min-width:80px;font-size:0.58rem;">${s.name}</span>
+      <div class="g-bar"><div class="g-fill" style="width:${s.pct}%;background:${col};"></div></div>
+      <span class="g-val">${s.pct}%</span>
+    </div>`;
+  }).join('');
+}
+buildSystems();
+
+/* ── COMBAT LOG ── */
+function logCombat(type, msg) {
+  const log = document.getElementById('combat-log');
+  const t = new Date().toLocaleTimeString('en',{hour12:false});
+  const cl = {OK:'tl-ok',WARN:'tl-warn',ERR:'tl-err',INFO:'tl-info'}[type]||'tl-ok';
+  const d = document.createElement('div');
+  d.className = cl;
+  d.textContent = `[${t}] ${msg}`;
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+}
+function clearLog(){document.getElementById('combat-log').innerHTML='';}
+
+/* ── PHYSICS.JS INTEGRATION ── */
+document.getElementById('sb-physics').textContent =
+  typeof IronPhysics !== 'undefined'
+    ? '⚡ physics.js v'+IronPhysics.version+' loaded'
+    : '⚠ physics.js not found';
+
+/* ── FCS CALCULATOR (using physics.js) ── */
+let penChart = null;
+let simData  = {heading:0, elev:0, roll:0, gforce:1.0, speed:0, lat:null, lon:null, bat:78, ammo:42, hits:0};
+
+function calcFCS() {
+  if (typeof IronPhysics === 'undefined') return;
+
+  const ammoType = document.getElementById('r-ammo').value;
+  const elev     = parseFloat(document.getElementById('r-elev').value) || 0;
+  const tSpd     = parseFloat(document.getElementById('r-tspd').value) || 0;
+  const tArmor   = parseFloat(document.getElementById('r-tarmor').value) || 600;
+
+  const ammos = {
+    apfsds:{ v0:1650, mass:4.8,   caliber:0.120, type:'apfsds' },
+    heat:  { v0:1050, mass:10.5,  caliber:0.120, type:'heat'   },
+    he:    { v0:850,  mass:14.2,  caliber:0.120, type:'he'     },
+    hesh:  { v0:760,  mass:15.0,  caliber:0.120, type:'hesh'   },
+  };
+  const ammo = ammos[ammoType] || ammos.apfsds;
+
+  // Use physics.js trajectory
+  const traj = IronPhysics.ballistics.trajectory({
+    ...ammo, elevDeg: elev, maxRange: 6000, dt: 0.005
+  });
+
+  // Penetration
+  let pen_mm;
+  if (ammoType === 'apfsds') {
+    const pr = IronPhysics.ballistics.apfsdsPenetration({
+      velocity: traj.impactVelocity,
+      rodLength: ammo.caliber * 22,
+      rodDiameter: ammo.caliber * 0.22,
+    });
+    pen_mm = pr.penetration_mm;
+  } else {
+    const hr = IronPhysics.ballistics.heatPenetration({ caliber: ammo.caliber });
+    pen_mm = hr.penetration_mm;
+  }
+
+  // Armor check
+  const armChk = IronPhysics.combat.penetrationCheck(pen_mm, {
+    material: 'composite', thickness_mm: tArmor, slope_deg: 60
+  });
+
+  // Lead
+  const lead = tSpd * traj.timeOfFlight;
+
+  // KE
+  const ke = 0.5 * ammo.mass * ammo.v0 ** 2 / 1e6;
+
+  const drop_mm = Math.abs(traj.drop || 0) * 1000;
+  const tof = traj.timeOfFlight;
+  const rng = traj.maxRange;
+
+  const vimp = traj.impactVelocity;
+
+  document.getElementById('fcs-result').innerHTML = `
+    <div class="r-row"><span class="r-k">Range (elev ${elev}°)</span><span class="r-v blue">${Math.round(rng)}m</span></div>
+    <div class="r-row"><span class="r-k">Time of Flight</span><span class="r-v">${tof.toFixed(2)}s</span></div>
+    <div class="r-row"><span class="r-k">Impact Velocity</span><span class="r-v">${Math.round(vimp)}m/s</span></div>
+    <div class="r-row"><span class="r-k">Muzzle KE</span><span class="r-v amber">${ke.toFixed(2)}MJ</span></div>
+    <div class="r-row"><span class="r-k">Ballistic Drop</span><span class="r-v">${drop_mm.toFixed(0)}mm</span></div>
+    <div class="r-row"><span class="r-k">Penetration</span><span class="r-v ${pen_mm>tArmor?'':'amber'}">${Math.round(pen_mm)}mm RHA</span></div>
+    <div class="r-row"><span class="r-k">Lateral Lead (${tSpd}m/s)</span><span class="r-v">${lead.toFixed(1)}m</span></div>
+    <div class="r-row"><span class="r-k">vs ${tArmor}mm Armor</span>
+      <span class="r-v ${armChk.penetrates?'red':''}" style="font-size:0.85rem;">
+        ${armChk.penetrates?'✓ PENETRATES':'✗ HELD'}
+      </span></div>
+  `;
+
+  drawTrajectory(traj, elev);
+  drawPenChart(ammo, ammoType);
+  buildThreatTable(pen_mm);
+
+  document.getElementById('sb-ammo').textContent = ammoType.toUpperCase();
+  document.getElementById('sb-mode').textContent = `◉ FCS COMPUTED — ${Math.round(rng)}m`;
+  document.getElementById('traj-info').textContent =
+    `${ammoType.toUpperCase()} | V0=${ammo.v0}m/s | ToF=${tof.toFixed(2)}s | Drop=${drop_mm.toFixed(0)}mm`;
+
+  logCombat('OK', `FCS: ${ammoType} ${Math.round(rng)}m ${tof.toFixed(2)}s pen=${Math.round(pen_mm)}mm`);
+}
+
+function drawTrajectory(traj, elev) {
+  const canvas = document.getElementById('traj-canvas');
+  if (!canvas) return;
+  const W = canvas.offsetWidth || 280, H = 120;
+  canvas.width = W;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#020602'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(57,255,20,0.07)'; ctx.lineWidth=0.5;
+  for(let x=0;x<=W;x+=W/8){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<=H;y+=H/4){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // Ground line
+  ctx.strokeStyle='rgba(57,255,20,0.3)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,H-10); ctx.lineTo(W,H-10); ctx.stroke();
+
+  // Trajectory path
+  const pts = traj.points;
+  if (!pts || pts.length < 2) return;
+  const maxX = Math.max(...pts.map(p=>p.x));
+  const maxY = Math.max(...pts.map(p=>p.y));
+  const scaleX = W / (maxX || 1);
+  const scaleY = (H-20) / Math.max(maxY, 1);
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#39ff14'; ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 4; ctx.shadowColor = '#39ff14';
+  pts.forEach((pt, i) => {
+    const px = pt.x * scaleX;
+    const py = H - 10 - pt.y * scaleY;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+let penChartInst = null;
+function drawPenChart(ammo, ammoType) {
+  if (typeof IronPhysics === 'undefined') return;
+  const ranges = [500,1000,1500,2000,2500,3000,4000,5000];
+  const pens = ranges.map(r => {
+    const vr = ammo.v0 * Math.exp(-0.5*0.05*1.225*Math.PI*(ammo.caliber/2)**2*r/ammo.mass);
+    if (ammoType === 'apfsds') {
+      const pr = IronPhysics.ballistics.apfsdsPenetration({
+        velocity: vr, rodLength: ammo.caliber*22, rodDiameter: ammo.caliber*0.22
+      });
+      return Math.round(pr.penetration_mm);
+    }
+    return Math.round(IronPhysics.ballistics.heatPenetration({caliber:ammo.caliber}).penetration_mm);
+  });
+
+  if (penChartInst) penChartInst.destroy();
+  const ctx = document.getElementById('chartPen');
+  if (!ctx) return;
+  penChartInst = new Chart(ctx, {
+    type:'line',
+    data:{ labels:ranges, datasets:[
+      {label:'Pen mm', data:pens, borderColor:'#39ff14', backgroundColor:'rgba(57,255,20,0.06)',
+       borderWidth:1.5, pointRadius:2, fill:true, tension:0.3},
+      {label:'MBT 600mm', data:ranges.map(()=>600), borderColor:'rgba(255,32,32,0.4)',
+       borderWidth:1, borderDash:[5,3], pointRadius:0},
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'rgba(57,255,20,0.6)',font:{family:'Share Tech Mono',size:9}}}},
+      scales:{
+        x:{ticks:{color:'rgba(57,255,20,0.4)',font:{family:'Share Tech Mono',size:9}},
+           grid:{color:'rgba(57,255,20,0.05)'}},
+        y:{ticks:{color:'rgba(57,255,20,0.4)',font:{family:'Share Tech Mono',size:9}},
+           grid:{color:'rgba(57,255,20,0.05)'}},
+      }
+    }
+  });
+}
+
+function buildThreatTable(ourPen) {
+  const threats = [
+    {name:'BMP-2', armor:50,  slope:30, range:1800},
+    {name:'T-55',  armor:200, slope:45, range:2400},
+    {name:'T-72B', armor:420, slope:65, range:2800},
+    {name:'T-90M', armor:550, slope:68, range:3200},
+    {name:'Abrams',armor:600, slope:68, range:3500},
+  ];
+  const tbody = document.getElementById('threat-tbody');
+  tbody.innerHTML = threats.map(t => {
+    const eff = t.armor / Math.cos(t.slope * Math.PI / 180) * 2.4;
+    const pkill = Math.min(99, Math.max(1, Math.round(ourPen / eff * 100)));
+    const cl = pkill>70?'tl-ok':pkill>40?'tl-warn':'tl-err';
+    return `<tr>
+      <td>${t.name}</td>
+      <td>${t.armor}mm/${t.slope}°</td>
+      <td>${t.range}m</td>
+      <td class="${cl}">${pkill}%</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── TACTICAL MAP ── */
+const canvas = document.getElementById('main-canvas');
+const ctx = canvas.getContext('2d');
+const mapUnits = [
+  {type:'friendly', x:0.35, y:0.55, label:'TANK-1', heading:45},
+  {type:'friendly', x:0.28, y:0.62, label:'IFV-A', heading:30},
+  {type:'enemy',    x:0.65, y:0.35, label:'T-90', heading:220},
+  {type:'enemy',    x:0.72, y:0.44, label:'BTR-82', heading:195},
+  {type:'waypoint', x:0.50, y:0.40, label:'OBJ-A'},
+  {type:'arty',     x:0.20, y:0.75, label:'HOW-1', heading:60},
+];
+let simHeading = 45;
+
+function resizeCanvas() {
+  canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  drawMap();
+}
+
+function drawMap() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  ctx.fillStyle = '#020a02'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  const gs = 60;
+  ctx.strokeStyle = 'rgba(57,255,20,0.06)'; ctx.lineWidth = 0.5;
+  for (let x=0; x<=W; x+=gs) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y=0; y<=H; y+=gs) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Subtle terrain contours (simulated)
+  for (let i=0; i<8; i++) {
+    ctx.beginPath();
+    ctx.ellipse(W*0.6, H*0.3, W*0.15+i*8, H*0.1+i*5, -0.2, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(57,255,20,${0.04-i*0.004})`;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // Grid labels
+  ctx.fillStyle = 'rgba(57,255,20,0.15)'; ctx.font = '9px Share Tech Mono';
+  for (let xi=0; xi*gs<W; xi++) ctx.fillText(String(xi).padStart(2,'0'), xi*gs+2, 12);
+  for (let yi=0; yi*gs<H; yi++) ctx.fillText(String(yi).padStart(2,'0'), 2, yi*gs+10);
+
+  // Units
+  mapUnits.forEach(u => {
+    const x = u.x * W, y = u.y * H;
+    const colors = {friendly:'#39ff14', enemy:'#ff2020', waypoint:'#00d4ff', arty:'#ffb000'};
+    const c = colors[u.type] || '#fff';
+
+    ctx.save();
+    ctx.translate(x, y);
+    if (u.heading !== undefined) ctx.rotate(u.heading * Math.PI / 180);
+
+    // Unit icon
+    if (u.type === 'friendly' || u.type === 'enemy') {
+      ctx.fillStyle = c; ctx.shadowBlur = 8; ctx.shadowColor = c;
+      ctx.fillRect(-6, -4, 12, 8);
+      // Gun barrel
+      ctx.fillRect(-1, -9, 2, 7);
+    } else if (u.type === 'waypoint') {
+      ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.shadowBlur = 6; ctx.shadowColor = c;
+      ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(8,4); ctx.lineTo(-8,4); ctx.closePath(); ctx.stroke();
+    } else {
+      ctx.fillStyle = c; ctx.shadowBlur = 6; ctx.shadowColor = c;
+      ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // Label
+    ctx.fillStyle = c; ctx.font = 'bold 9px Share Tech Mono';
+    ctx.shadowBlur = 3; ctx.shadowColor = c;
+    ctx.fillText(u.label, x+10, y-6);
+    ctx.shadowBlur = 0;
+
+    // Range ring for friendlies
+    if (u.type === 'friendly') {
+      ctx.beginPath(); ctx.arc(x, y, 70, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(57,255,20,0.08)'; ctx.lineWidth = 0.5; ctx.stroke();
+    }
+    if (u.type === 'enemy') {
+      ctx.beginPath(); ctx.arc(x, y, 90, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(255,32,32,0.1)'; ctx.lineWidth = 0.5; ctx.stroke();
+    }
+  });
+
+  // Animated sweep from friendly tank
+  const ft = mapUnits.find(u=>u.type==='friendly');
+  if (ft) {
+    const fx = ft.x*W, fy = ft.y*H;
+    const sweep = ((Date.now()/1000 * 30) % 360) * Math.PI/180;
+    const grad = ctx.createConicalGradient
+      ? null
+      : null;
+    // Simple sweep line
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.lineTo(fx + Math.cos(sweep)*120, fy + Math.sin(sweep)*120);
+    ctx.strokeStyle = 'rgba(57,255,20,0.3)'; ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Range lines between friendly and enemy
+  const friendly = mapUnits.filter(u=>u.type==='friendly');
+  const enemies  = mapUnits.filter(u=>u.type==='enemy');
+  friendly.forEach(f => {
+    enemies.forEach(e => {
+      const fx=f.x*W, fy=f.y*H, ex=e.x*W, ey=e.y*H;
+      const dist = Math.sqrt((fx-ex)**2+(fy-ey)**2);
+      const distM = Math.round(dist * 8); // rough scale
+      ctx.beginPath();
+      ctx.moveTo(fx,fy); ctx.lineTo(ex,ey);
+      ctx.strokeStyle = 'rgba(255,176,0,0.15)'; ctx.lineWidth = 0.5;
+      ctx.setLineDash([3,6]); ctx.stroke(); ctx.setLineDash([]);
+      // Distance label
+      ctx.fillStyle = 'rgba(255,176,0,0.4)'; ctx.font = '8px Share Tech Mono';
+      ctx.fillText(distM+'m', (fx+ex)/2, (fy+ey)/2);
+    });
+  });
+}
+
+// Animate map
+function animateMap() {
+  if (canvas.offsetWidth > 0) {
+    if (canvas.width !== canvas.offsetWidth) resizeCanvas();
+    drawMap();
+  }
+  requestAnimationFrame(animateMap);
+}
+animateMap();
+
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX-r.left) / 60);
+  const y = Math.floor((e.clientY-r.top)  / 60);
+  document.getElementById('map-cursor').textContent =
+    `CURSOR: ${String(x).padStart(2,'0')}-${String(y).padStart(2,'0')}`;
+  document.getElementById('sb-grid').textContent =
+    `GRID: ${String(x).padStart(2,'0')}${String(y).padStart(2,'0')}`;
+});
+
+canvas.addEventListener('click', e => {
+  const r = canvas.getBoundingClientRect();
+  const nx = (e.clientX-r.left)/canvas.width;
+  const ny = (e.clientY-r.top) /canvas.height;
+  mapUnits.push({type:'waypoint', x:nx, y:ny, label:'WP'+(mapUnits.length+1)});
+  logCombat('INFO', `Waypoint placed at (${(nx*100).toFixed(0)},${(ny*100).toFixed(0)})`);
+});
+
+/* ── SIMULATE MOBILE LINK ── */
+let simInterval = null;
+let simT = 0;
+
+function simulateMobileLink() {
+  if (simInterval) {
+    clearInterval(simInterval);
+    simInterval = null;
+    document.getElementById('sf-status').textContent = 'LINK LOST';
+    document.getElementById('sf-status').className   = 'sf-val amber';
+    document.getElementById('tb-badge').textContent   = 'LINK LOST';
+    document.getElementById('tb-badge').className     = 'alert-badge badge-warn';
+    document.querySelector('[onclick="simulateMobileLink()"]').textContent = '🔗 Simulate Link';
+    return;
+  }
+
+  document.querySelector('[onclick="simulateMobileLink()"]').textContent = '⊘ Disconnect';
+  document.getElementById('tb-sensor').textContent = '📱 Mobile: LINKED';
+  document.getElementById('sf-status').textContent = 'LINKED';
+  document.getElementById('sf-status').className   = 'sf-val live';
+  document.getElementById('tb-badge').textContent   = 'LINK ACTIVE';
+  document.getElementById('tb-badge').className     = 'alert-badge badge-ok';
+  logCombat('OK', 'Mobile link established — sensor stream active');
+
+  simInterval = setInterval(() => {
+    simT += 0.05;
+    const heading = (simT * 15) % 360;
+    const elev    = Math.sin(simT * 0.4) * 12;
+    const roll    = Math.sin(simT * 0.3) * 6;
+    const gforce  = 1.0 + Math.abs(Math.sin(simT * 0.8)) * 0.25;
+    const speed   = Math.max(0, 30 + Math.sin(simT * 0.2) * 25);
+    const bat     = Math.max(10, 78 - simT * 0.02);
+
+    document.getElementById('sf-heading').textContent = heading.toFixed(1) + '°';
+    document.getElementById('sf-elev').textContent    = (elev>=0?'+':'')+elev.toFixed(1)+'°';
+    document.getElementById('sf-roll').textContent    = roll.toFixed(1)+'°';
+    document.getElementById('sf-gforce').textContent  = gforce.toFixed(2)+'G';
+    document.getElementById('sf-speed').textContent   = speed.toFixed(0)+'km/h';
+    document.getElementById('sf-lat').textContent     = (17.25124+simT*0.00002).toFixed(5)+'°N';
+    document.getElementById('sf-lon').textContent     = (-88.77456+simT*0.00003).toFixed(5)+'°E';
+    document.getElementById('sf-bat').textContent     = bat.toFixed(0)+'%';
+
+    // Update moving friendly unit on map
+    if (mapUnits[0]) {
+      mapUnits[0].heading = heading;
+      mapUnits[0].x = Math.max(0.1, Math.min(0.9, 0.35 + Math.sin(simT*0.1)*0.05));
+      mapUnits[0].y = Math.max(0.1, Math.min(0.9, 0.55 + Math.cos(simT*0.1)*0.03));
+    }
+
+    // Occasional event
+    if (Math.random() < 0.005) {
+      logCombat('WARN', 'Mobile: Impact detected — HIT #'+(++simData.hits));
+      document.getElementById('sf-hits').textContent = simData.hits;
+      document.getElementById('tb-badge').textContent  = 'IMPACT!';
+      document.getElementById('tb-badge').className    = 'alert-badge badge-red';
+      setTimeout(()=>{
+        document.getElementById('tb-badge').textContent='LINK ACTIVE';
+        document.getElementById('tb-badge').className='alert-badge badge-ok';
+      }, 2000);
+    }
+  }, 100);
+}
+
+/* ── INIT ── */
+calcFCS();
+window.addEventListener('resize', () => { resizeCanvas(); });
+resizeCanvas();
+logCombat('INFO', 'physics.js v' + (typeof IronPhysics !== 'undefined' ? IronPhysics.version : '?') + ' — FCS ready');
+</script>
+</body>
+</html>
