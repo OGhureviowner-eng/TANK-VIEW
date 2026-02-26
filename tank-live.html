@@ -1,41 +1,395 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Sensor Integration</title>
-    <script>
-        let gpsData = { lat: 0, lon: 0 };
-
-        function updateGPS() {
-            // Mock GPS tracking data
-            gpsData.lat += 0.0001; // Simulate movement
-            gpsData.lon += 0.0001;
-            document.getElementById('gps-info').innerText = `Latitude: ${gpsData.lat.toFixed(6)}, Longitude: ${gpsData.lon.toFixed(6)}`;
-        }
-
-        function calculateMotion() {
-            // Placeholder for motion calculations
-            // This could integrate with actual sensor data in a real scenario
-            console.log('Calculating motion...');
-        }
-
-        function updateDirection() {
-            // Mock directional updates
-            let direction = Math.random() * 360;
-            document.getElementById('direction-info').innerText = `Direction: ${direction.toFixed(2)}°`;
-        }
-
-        setInterval(() => {
-            updateGPS();
-            calculateMotion();
-            updateDirection();
-        }, 1000);
-    </script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>IRON COMMAND — LIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --g: #39ff14;
+  --red: #ff2828;
+  --blue: #00d4ff;
+  --bg: #010401;
+}
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+html, body {
+  width:100%; height:100%;
+  background:#000;
+  color:var(--g);
+  font-family:'Share Tech Mono', monospace;
+  overflow:hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background:repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(0,0,0,0.09) 2px, rgba(0,0,0,0.09) 3px);
+  pointer-events:none; z-index:9000;
+}
+#boot { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; background:rgba(1,4,1,0.97); z-index:5000; }
+#boot.gone { display:none; }
+.boot-logo { font-family:'Orbitron', sans-serif; font-size:2rem; font-weight:900; text-shadow:0 0 20px var(--g); letter-spacing:0.2em; }
+#activate-btn { padding:12px 28px; background:rgba(57,255,20,0.1); border:2px solid var(--g); color:var(--g); font-size:1rem; cursor:pointer; text-transform:uppercase; letter-spacing:0.15em; }
+#hud { position:fixed; inset:0; display:none; z-index:10; }
+#hud.active { display:block; }
+#main-display {
+  position:fixed; inset:20px;
+  background:rgba(1,4,1,0.85);
+  border:2px solid rgba(57,255,20,0.3);
+  padding:20px;
+  overflow-y:auto;
+  font-size:1rem;
+  line-height:2;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:20px;
+}
+.panel { background:rgba(1,4,1,0.6); border:1px solid rgba(57,255,20,0.2); padding:15px; }
+.panel-title { font-family:'Orbitron', sans-serif; font-size:0.9rem; font-weight:700; color:var(--g); text-shadow:0 0 8px var(--g); letter-spacing:0.12em; margin-bottom:10px; text-transform:uppercase; }
+.row { display:flex; justify-content:space-between; gap:15px; font-size:0.9rem; }
+.label { color:rgba(57,255,20,0.6); }
+.value { color:var(--g); font-weight:bold; font-family:'Orbitron', sans-serif; }
+.value.amber { color:#ffb000; }
+.value.red { color:var(--red); }
+.value.blue { color:var(--blue); }
+#graph-canvas { width:100%; height:80px; border:1px solid rgba(57,255,20,0.2); margin-top:10px; }
+@media (orientation:portrait) {
+  #main-display { grid-template-columns:1fr; }
+}
+</style>
 </head>
 <body>
-    <h1>Real-Time Sensor Integration</h1>
-    <div id="gps-info">Latitude: 0.000000, Longitude: 0.000000</div>
-    <div id="direction-info">Direction: 0.00°</div>
+
+<!-- BOOT SCREEN -->
+<div id="boot">
+  <div class="boot-logo">⊕ IRON COMMAND</div>
+  <div style="font-size:0.8rem; color:rgba(57,255,20,0.6);">LIVE TACTICAL SYSTEM</div>
+  <button id="activate-btn">▶ ACTIVATE</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="main-display">
+    
+    <!-- COMPASS & HEADING -->
+    <div class="panel">
+      <div class="panel-title">⊕ HEADING</div>
+      <div class="row">
+        <span class="label">BEARING:</span>
+        <span class="value" id="heading-val">000°</span>
+      </div>
+      <div class="row">
+        <span class="label">CARDINAL:</span>
+        <span class="value" id="cardinal-val">N</span>
+      </div>
+      <div class="row">
+        <span class="label">FULL DIR:</span>
+        <span class="value" id="fulldir-val">NORTH</span>
+      </div>
+    </div>
+
+    <!-- GPS LIVE -->
+    <div class="panel">
+      <div class="panel-title">📍 GPS LOCATION</div>
+      <div class="row">
+        <span class="label">LATITUDE:</span>
+        <span class="value" id="lat-val">—</span>
+      </div>
+      <div class="row">
+        <span class="label">LONGITUDE:</span>
+        <span class="value" id="lon-val">—</span>
+      </div>
+      <div class="row">
+        <span class="label">SPEED:</span>
+        <span class="value" id="speed-val">—</span>
+      </div>
+      <div class="row">
+        <span class="label">ALTITUDE:</span>
+        <span class="value" id="alt-val">—</span>
+      </div>
+    </div>
+
+    <!-- GYROSCOPE ANGLES -->
+    <div class="panel">
+      <div class="panel-title">🔄 GYROSCOPE</div>
+      <div class="row">
+        <span class="label">ALPHA (YAW):</span>
+        <span class="value" id="alpha-val">—°</span>
+      </div>
+      <div class="row">
+        <span class="label">BETA (PITCH):</span>
+        <span class="value" id="beta-val">—°</span>
+      </div>
+      <div class="row">
+        <span class="label">GAMMA (ROLL):</span>
+        <span class="value" id="gamma-val">—°</span>
+      </div>
+    </div>
+
+    <!-- ACCELEROMETER -->
+    <div class="panel">
+      <div class="panel-title">⚡ ACCELEROMETER</div>
+      <div class="row">
+        <span class="label">X-ACCEL:</span>
+        <span class="value" id="ax-val">—</span>
+      </div>
+      <div class="row">
+        <span class="label">Y-ACCEL:</span>
+        <span class="value" id="ay-val">—</span>
+      </div>
+      <div class="row">
+        <span class="label">Z-ACCEL:</span>
+        <span class="value" id="az-val">—</span>
+      </div>
+      <div class="row">
+        <span class="label">G-FORCE:</span>
+        <span class="value" id="gforce-val">—</span>
+      </div>
+    </div>
+
+    <!-- BALLISTICS -->
+    <div class="panel">
+      <div class="panel-title">🎯 BALLISTICS</div>
+      <div class="row">
+        <span class="label">ELEVATION:</span>
+        <span class="value" id="elev-val">—°</span>
+      </div>
+      <div class="row">
+        <span class="label">RANGE:</span>
+        <span class="value" id="range-val">—m</span>
+      </div>
+      <div class="row">
+        <span class="label">TIME-OF-FLIGHT:</span>
+        <span class="value" id="tof-val">—s</span>
+      </div>
+    </div>
+
+    <!-- MOTION VECTOR -->
+    <div class="panel">
+      <div class="panel-title">⇧ MOTION VECTOR</div>
+      <div class="row">
+        <span class="label">DIRECTION:</span>
+        <span class="value" id="motion-dir">—</span>
+      </div>
+      <div class="row">
+        <span class="label">VELOCITY:</span>
+        <span class="value" id="motion-vel">—</span>
+      </div>
+      <div class="row">
+        <span class="label">NORTH/SOUTH:</span>
+        <span class="value" id="ns-val">—</span>
+      </div>
+      <div class="row">
+        <span class="label">EAST/WEST:</span>
+        <span class="value" id="ew-val">—</span>
+      </div>
+    </div>
+
+    <!-- ACCEL HISTORY GRAPH -->
+    <div class="panel" style="grid-column:1/-1;">
+      <div class="panel-title">📊 ACCELERATION HISTORY (LIVE)</div>
+      <canvas id="graph-canvas"></canvas>
+    </div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+const S = {
+  alpha:0, beta:0, gamma:0,
+  ax:0, ay:0, az:0, gForce:1,
+  lat:null, lon:null, alt:null,
+  gpsSpeed:0, gpsOk:false,
+  accelHistory: [],
+};
+
+function cardinal(h) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(h/22.5) % 16];
+}
+
+function fullDirection(h) {
+  const fullDirs = ['NORTH','NORTH-NORTHEAST','NORTHEAST','EAST-NORTHEAST','EAST','EAST-SOUTHEAST','SOUTHEAST','SOUTH-SOUTHEAST',
+    'SOUTH','SOUTH-SOUTHWEST','SOUTHWEST','WEST-SOUTHWEST','WEST','WEST-NORTHWEST','NORTHWEST','NORTH-NORTHWEST'];
+  return fullDirs[Math.round(h/22.5) % 16];
+}
+
+// Device Orientation
+if(typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+  document.getElementById('activate-btn').addEventListener('click', async ()=>{
+    try {
+      const r = await DeviceOrientationEvent.requestPermission();
+      if(r === 'granted') {
+        window.addEventListener('deviceorientation', handleOri, true);
+        startSystem();
+      }
+    } catch(e) { console.warn(e); }
+  });
+} else {
+  document.getElementById('activate-btn').addEventListener('click', ()=>{
+    window.addEventListener('deviceorientation', handleOri, true);
+    startSystem();
+  });
+}
+
+// Device Motion
+if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+  setTimeout(async ()=>{
+    try {
+      const r = await DeviceMotionEvent.requestPermission();
+      if(r === 'granted') {
+        window.addEventListener('devicemotion', handleMotion, true);
+      }
+    } catch(e) { console.warn(e); }
+  }, 500);
+} else {
+  window.addEventListener('devicemotion', handleMotion, true);
+}
+
+function handleOri(e) {
+  S.alpha = e.alpha || 0;
+  S.beta = e.beta || 0;
+  S.gamma = e.gamma || 0;
+}
+
+function handleMotion(e) {
+  const acc = e.accelerationIncludingGravity;
+  if(!acc) return;
+  S.ax = acc.x || 0;
+  S.ay = acc.y || 0;
+  S.az = acc.z || 0;
+  const mag = Math.sqrt(S.ax**2 + S.ay**2 + S.az**2);
+  S.gForce = mag / 9.81;
+  S.accelHistory.push(S.gForce);
+  if(S.accelHistory.length > 200) S.accelHistory.shift();
+  // Estimate speed from lateral acceleration
+  const lat = Math.sqrt(S.ax**2 + S.ay**2);
+  S.gpsSpeed = Math.max(0, Math.min(120, S.gpsSpeed + (lat - 0.1) * 0.8));
+  if(lat < 0.15) S.gpsSpeed = Math.max(0, S.gpsSpeed - 0.6);
+}
+
+// GPS
+if(navigator.geolocation) {
+  navigator.geolocation.watchPosition(p=>{
+    S.lat = p.coords.latitude;
+    S.lon = p.coords.longitude;
+    S.alt = p.coords.altitude;
+    S.gpsSpeed = (p.coords.speed || 0) * 3.6;
+    S.gpsOk = true;
+  }, err=>{
+    console.warn('GPS err:', err);
+  }, {enableHighAccuracy:true, maximumAge:0, timeout:10000});
+}
+
+// Render loop
+function render() {
+  const h = S.alpha;
+  const p = S.beta;
+  const r = S.gamma;
+  
+  // Heading
+  document.getElementById('heading-val').textContent = Math.round(h).toString().padStart(3, '0') + '°';
+  document.getElementById('cardinal-val').textContent = cardinal(h);
+  document.getElementById('fulldir-val').textContent = fullDirection(h);
+  
+  // GPS
+  document.getElementById('lat-val').textContent = S.lat ? S.lat.toFixed(5) + (S.lat>=0?'°N':'°S') : '—';
+  document.getElementById('lon-val').textContent = S.lon ? S.lon.toFixed(5) + (S.lon>=0?'°E':'°W') : '—';
+  document.getElementById('speed-val').textContent = S.gpsOk ? Math.round(S.gpsSpeed) + ' km/h' : (Math.round(S.gpsSpeed) + ' km/h (EST)');
+  document.getElementById('alt-val').textContent = S.alt ? Math.round(S.alt) + 'm' : '—';
+  
+  // Gyroscope
+  document.getElementById('alpha-val').textContent = h.toFixed(1) + '°';
+  document.getElementById('beta-val').textContent = p.toFixed(1) + '°';
+  document.getElementById('gamma-val').textContent = r.toFixed(1) + '°';
+  
+  // Accelerometer
+  document.getElementById('ax-val').textContent = S.ax.toFixed(2) + ' m/s²';
+  document.getElementById('ay-val').textContent = S.ay.toFixed(2) + ' m/s²';
+  document.getElementById('az-val').textContent = S.az.toFixed(2) + ' m/s²';
+  const gEl = document.getElementById('gforce-val');
+  gEl.textContent = S.gForce.toFixed(2) + 'g';
+  gEl.className = 'value' + (S.gForce > 2 ? ' red' : S.gForce > 1.3 ? ' amber' : '');
+  
+  // Ballistics
+  const elev = -p;
+  const vel = 1650, mass = 4.8, Cd = 0.05, A = Math.PI * 0.06**2, g = 9.81;
+  const rng = elev > 0 ? Math.round(vel**2 * Math.sin(2*elev*Math.PI/180) / g) : 2000;
+  const rd = Math.min(5000, Math.max(200, rng));
+  const vR = vel * Math.exp(-0.5 * Cd * 1.225 * A * rd / mass);
+  const tof = rd / ((vel + vR) / 2);
+  document.getElementById('elev-val').textContent = elev.toFixed(1) + '°';
+  document.getElementById('range-val').textContent = rd + 'm';
+  document.getElementById('tof-val').textContent = tof.toFixed(2) + 's';
+  
+  // Motion Vector
+  const motionMag = Math.sqrt(S.ax**2 + S.ay**2);
+  const motionAngle = Math.atan2(S.ay, S.ax) * 180 / Math.PI;
+  document.getElementById('motion-dir').textContent = motionMag > 0.5 ? fullDirection((motionAngle + 90 + 360) % 360) : '—';
+  document.getElementById('motion-vel').textContent = (motionMag).toFixed(2) + ' m/s²';
+  
+  // North/South: positive beta = device tilting up = moving forward (toward north-ish)
+  const nsComponent = -p * Math.cos(r * Math.PI / 180);
+  document.getElementById('ns-val').textContent = (nsComponent > 0.3 ? '↑ NORTH' : nsComponent < -0.3 ? '↓ SOUTH' : '• STATIONARY');
+  
+  // East/West: positive gamma = tilting right = moving east
+  const ewComponent = r;
+  document.getElementById('ew-val').textContent = (ewComponent > 5 ? '→ EAST' : ewComponent < -5 ? '← WEST' : '• CENTER');
+}
+
+function drawGraph() {
+  const canvas = document.getElementById('graph-canvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(1,4,1,0.3)';
+  ctx.fillRect(0, 0, w, h);
+  
+  // Grid
+  ctx.strokeStyle = 'rgba(57,255,20,0.1)';
+  ctx.lineWidth = 0.5;
+  const y1g = h - (1 - 0.5) / (2.5 - 0.5) * h;
+  ctx.beginPath();
+  ctx.moveTo(0, y1g);
+  ctx.lineTo(w, y1g);
+  ctx.stroke();
+  
+  // Graph line
+  if(S.accelHistory.length < 2) return;
+  ctx.beginPath();
+  ctx.strokeStyle = '#39ff14';
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 5;
+  ctx.shadowColor = '#39ff14';
+  S.accelHistory.forEach((v, i)=>{
+    const x = w * (i / (S.accelHistory.length - 1));
+    const yv = h - (Math.max(0.5, Math.min(2.5, v)) - 0.5) / (2.5 - 0.5) * h;
+    i === 0 ? ctx.moveTo(x, yv) : ctx.lineTo(x, yv);
+  });
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+function startSystem() {
+  document.getElementById('boot').classList.add('gone');
+  document.getElementById('hud').classList.add('active');
+  const loop = () => {
+    render();
+    drawGraph();
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+// Fallback if no permissions needed
+setTimeout(()=>{
+  if(!document.getElementById('hud').classList.contains('active')) {
+    startSystem();
+  }
+}, 3000);
+</script>
+
 </body>
 </html>
