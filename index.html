@@ -2,1820 +2,303 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>IRON COMMAND — LIVE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IRON COMMAND — Project Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
 <style>
-/* ════════════════════════════════════════
-   ROOT
-════════════════════════════════════════ */
-:root {
-  --g: #39ff14;
-  --g2: rgba(57,255,20,0.6);
-  --g3: rgba(57,255,20,0.15);
-  --g4: rgba(57,255,20,0.06);
-  --amber: #ffb000;
-  --red: #ff2020;
-  --blue: #00d4ff;
-  --bg: #020602;
-  --glow: 0 0 12px rgba(57,255,20,0.7), 0 0 30px rgba(57,255,20,0.3);
-  --glow-sm: 0 0 6px rgba(57,255,20,0.5);
-  --font: 'Share Tech Mono', monospace;
-  --hud: 'Orbitron', sans-serif;
+:root{
+  --g:#39ff14;--g2:rgba(57,255,20,0.6);--g3:rgba(57,255,20,0.1);
+  --amber:#ffb000;--red:#ff2020;--blue:#00d4ff;
+  --bg:#020602;--panel:#060e06;--border:rgba(57,255,20,0.22);
+  --glow:0 0 14px rgba(57,255,20,0.6),0 0 30px rgba(57,255,20,0.2);
+  --font:'Share Tech Mono',monospace;--hud:'Orbitron',sans-serif;
 }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--g);font-family:var(--font);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 4px);pointer-events:none;z-index:9999;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.7) 100%);pointer-events:none;z-index:9998;}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#020602}::-webkit-scrollbar-thumb{background:var(--border)}
 
-* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; user-select:none; }
+#hero{text-align:center;padding:60px 20px 40px;position:relative;}
+.hero-ascii{font-size:clamp(0.35rem,1.2vw,0.65rem);color:var(--g);text-shadow:var(--glow);white-space:pre;line-height:1.2;display:inline-block;animation:flicker 6s ease infinite;}
+.hero-sub{font-family:var(--hud);font-size:clamp(0.7rem,2vw,1.1rem);font-weight:700;letter-spacing:0.35em;color:var(--g);text-shadow:var(--glow);margin-top:16px;}
+.hero-desc{font-size:0.72rem;color:var(--g2);letter-spacing:0.12em;margin-top:10px;line-height:2;}
 
-html, body {
-  width:100%; height:100%;
-  overflow:hidden;
-  background:var(--bg);
-  font-family:var(--font);
-  color:var(--g);
-  touch-action:none;
-}
+#file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;padding:20px 40px 40px;max-width:1200px;margin:0 auto;}
 
-/* Scanlines */
-body::before {
-  content:'';
-  position:fixed; inset:0;
-  background:repeating-linear-gradient(
-    0deg, transparent 0, transparent 3px,
-    rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px
-  );
-  pointer-events:none; z-index:9999;
-}
-
-/* CRT vignette */
-body::after {
-  content:'';
-  position:fixed; inset:0;
-  background:radial-gradient(ellipse at center,
-    transparent 55%, rgba(0,0,0,0.75) 100%);
-  pointer-events:none; z-index:9998;
-}
-
-/* ════════════════════════════════════════
-   PERMISSION / BOOT SCREEN
-════════════════════════════════════════ */
-#boot {
-  position:fixed; inset:0;
-  background:var(--bg);
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  gap:20px; padding:30px;
-  z-index:5000;
-}
-#boot.gone { display:none; }
-
-.boot-logo {
-  font-family:var(--hud);
-  font-size:clamp(1.2rem,5vw,2rem);
-  font-weight:900;
-  color:var(--g);
-  text-shadow:var(--glow);
-  letter-spacing:0.2em;
-  text-align:center;
-  animation:pulse-glow 2s ease infinite;
-}
-.boot-sub {
-  font-size:0.72rem;
-  color:var(--g2);
-  letter-spacing:0.2em;
-  text-transform:uppercase;
-  text-align:center;
-  line-height:2;
-}
-.boot-desc {
-  font-size:0.7rem;
-  color:rgba(57,255,20,0.5);
-  text-align:center;
-  line-height:1.9;
-  max-width:320px;
-  border:1px solid rgba(57,255,20,0.2);
-  padding:14px 16px;
-}
-.boot-desc span { color:var(--g); }
-
-#activate-btn {
-  font-family:var(--hud);
-  font-size:0.9rem;
-  font-weight:700;
-  letter-spacing:0.2em;
-  text-transform:uppercase;
-  padding:16px 36px;
-  background:rgba(57,255,20,0.1);
-  border:2px solid var(--g);
-  color:var(--g);
-  cursor:pointer;
-  clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
-  box-shadow:var(--glow);
-  animation:pulse-border 1.5s ease infinite;
-}
-
-#sensor-status {
-  font-size:0.65rem;
-  color:rgba(57,255,20,0.4);
-  letter-spacing:0.15em;
-  text-align:center;
-  line-height:2;
-}
-.sensor-ok   { color:var(--g); }
-.sensor-warn { color:var(--amber); }
-.sensor-no   { color:var(--red); }
-
-/* ════════════════════════════════════════
-   MAIN HUD
-════════════════════════════════════════ */
-#hud {
-  position:fixed; inset:0;
-  display:none;
-  overflow:hidden;
-}
-#hud.active { display:block; }
-
-/* ── IMPACT FLASH ── */
-#impact-flash {
-  position:fixed; inset:0;
-  background:rgba(255,30,30,0.0);
-  pointer-events:none;
-  z-index:8000;
-  transition:background 0.05s;
-}
-#impact-flash.hit { background:rgba(255,30,30,0.55); }
-
-/* ── FIRE FLASH ── */
-#fire-flash {
-  position:fixed; inset:0;
-  background:rgba(255,180,0,0.0);
-  pointer-events:none;
-  z-index:7999;
-  transition:background 0.05s;
-}
-#fire-flash.fired { background:rgba(255,200,0,0.35); }
-
-/* ════════════════════════════════════════
-   CROSSHAIR / MAIN SIGHT
-════════════════════════════════════════ */
-#sight-wrap {
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  width:min(70vw, 70vh);
-  height:min(70vw, 70vh);
-  pointer-events:none;
-}
-
-#sight-svg {
-  width:100%; height:100%;
-  filter:drop-shadow(0 0 8px rgba(57,255,20,0.6));
-}
-
-/* Aim reticle rotation from gyro */
-#reticle-group {
-  transform-origin:center;
-  transform-box:fill-box;
-  transition:transform 0.08s linear;
-}
-
-/* Range finder lines */
-.range-mark {
-  stroke:rgba(57,255,20,0.3);
-  stroke-width:0.5;
-}
-.range-mark-label {
-  fill:rgba(57,255,20,0.4);
-  font-family:'Share Tech Mono', monospace;
-  font-size:6px;
-}
-
-/* Pulse ring on lock */
-#lock-ring {
-  opacity:0;
-  stroke:var(--g);
-  stroke-width:1;
-  fill:none;
-  transition:opacity 0.3s;
-}
-#lock-ring.locked { opacity:1; animation:lock-pulse 0.8s ease infinite; }
-
-/* ════════════════════════════════════════
-   COMPASS ROSE (top center)
-════════════════════════════════════════ */
-#compass-wrap {
-  position:absolute;
-  top:12px; left:50%;
-  transform:translateX(-50%);
-  width:min(54vw, 260px);
-  height:44px;
-  pointer-events:none;
-}
-
-#compass-tape {
-  position:absolute;
-  top:0; left:0; right:0;
-  height:28px;
-  overflow:hidden;
-  border:1px solid rgba(57,255,20,0.25);
-  background:rgba(2,6,2,0.8);
-}
-
-#compass-inner {
-  position:absolute;
-  top:0;
-  height:100%;
-  display:flex;
-  align-items:center;
-  white-space:nowrap;
-  font-size:0.62rem;
-  letter-spacing:0.08em;
-  color:var(--g2);
-  /* Will be translated by JS */
-  will-change:transform;
-}
-.c-major { color:var(--g); font-weight:bold; font-size:0.75rem; }
-.c-minor { color:rgba(57,255,20,0.45); font-size:0.55rem; }
-
-#compass-center {
-  position:absolute;
-  bottom:0; left:50%;
-  transform:translateX(-50%);
-  width:2px; height:16px;
-  background:var(--g);
-  box-shadow:var(--glow-sm);
-}
-
-#compass-heading {
-  position:absolute;
-  bottom:0; left:50%;
-  transform:translateX(-50%);
-  font-family:var(--hud);
-  font-size:0.7rem;
-  font-weight:700;
-  color:var(--g);
-  text-shadow:var(--glow-sm);
-  letter-spacing:0.1em;
-  text-align:center;
-  white-space:nowrap;
-}
-
-/* ════════════════════════════════════════
-   GUN ELEVATION (left side)
-════════════════════════════════════════ */
-#elevation-panel {
-  position:absolute;
-  top:50%; left:10px;
-  transform:translateY(-50%);
-  width:40px;
-  height:min(40vh, 200px);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:4px;
-}
-
-.elev-label {
-  font-size:0.55rem;
-  letter-spacing:0.1em;
-  color:var(--g2);
-  text-transform:uppercase;
-}
-
-#elev-track {
-  flex:1;
-  width:8px;
-  background:rgba(57,255,20,0.08);
-  border:1px solid rgba(57,255,20,0.2);
+.file-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:20px;
   position:relative;
-  overflow:visible;
-}
-
-#elev-indicator {
-  position:absolute;
-  left:50%; width:20px; height:3px;
-  background:var(--g);
-  box-shadow:var(--glow-sm);
-  transform:translate(-50%, -50%);
-  transition:top 0.1s linear;
-  top:50%;
-}
-#elev-indicator::before {
-  content:'';
-  position:absolute;
-  right:100%; top:-2px;
-  width:8px; height:7px;
-  border-right:6px solid var(--g);
-  border-top:3.5px solid transparent;
-  border-bottom:3.5px solid transparent;
-}
-
-#elev-zero {
-  position:absolute;
-  left:-6px; top:50%;
-  width:calc(100% + 12px); height:1px;
-  background:rgba(57,255,20,0.3);
-  transform:translateY(-50%);
-}
-
-#elev-value {
-  font-family:var(--hud);
-  font-size:0.65rem;
-  color:var(--g);
-  text-shadow:var(--glow-sm);
-  text-align:center;
-}
-
-/* Tick marks on elevation */
-.elev-tick {
-  position:absolute;
-  left:0; width:4px; height:1px;
-  background:rgba(57,255,20,0.3);
-}
-
-/* ════════════════════════════════════════
-   SPEED / G-FORCE (right side)
-════════════════════════════════════════ */
-#right-panel {
-  position:absolute;
-  top:50%; right:10px;
-  transform:translateY(-50%);
-  width:56px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  align-items:flex-end;
-}
-
-.rp-block {
-  background:rgba(2,6,2,0.75);
-  border:1px solid rgba(57,255,20,0.2);
-  padding:6px 8px;
-  text-align:right;
-  clip-path:polygon(0 0, 100% 0, 100% 100%, 6px 100%);
-  min-width:52px;
-}
-.rp-label {
-  font-size:0.5rem;
-  letter-spacing:0.15em;
-  color:var(--g2);
-  text-transform:uppercase;
-  display:block;
-}
-.rp-val {
-  font-family:var(--hud);
-  font-size:1rem;
-  font-weight:700;
-  color:var(--g);
-  text-shadow:var(--glow-sm);
-  display:block;
-  line-height:1.1;
-}
-.rp-unit {
-  font-size:0.5rem;
-  color:rgba(57,255,20,0.4);
-  display:block;
-}
-.rp-val.amber { color:var(--amber); text-shadow:0 0 8px var(--amber); }
-.rp-val.red   { color:var(--red);   text-shadow:0 0 8px var(--red); }
-
-/* ════════════════════════════════════════
-   GPS / COORDINATES (top corners)
-════════════════════════════════════════ */
-#coords-panel {
-  position:absolute;
-  top:68px; left:12px;
-  background:rgba(2,6,2,0.75);
-  border:1px solid rgba(57,255,20,0.2);
-  padding:8px 10px;
-  font-size:0.6rem;
-  line-height:2;
-  clip-path:polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
-  max-width:160px;
-}
-.coord-row { display:flex; justify-content:space-between; gap:12px; }
-.coord-key { color:var(--g2); }
-.coord-val { color:var(--g); font-weight:bold; }
-.coord-val.acquiring { color:var(--amber); animation:blink 1s step-end infinite; }
-
-/* GPS accuracy bar */
-#gps-accuracy-bar {
-  width:100%; height:2px;
-  background:rgba(57,255,20,0.1);
-  margin-top:4px;
-}
-#gps-accuracy-fill {
-  height:100%;
-  background:var(--g);
-  transition:width 1s ease;
-}
-
-/* ════════════════════════════════════════
-   TOP RIGHT INFO
-════════════════════════════════════════ */
-#topright-panel {
-  position:absolute;
-  top:68px; right:12px;
-  background:rgba(2,6,2,0.75);
-  border:1px solid rgba(57,255,20,0.2);
-  padding:8px 10px;
-  font-size:0.6rem;
-  line-height:2;
-  clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
-  text-align:right;
-  max-width:160px;
-}
-
-/* ════════════════════════════════════════
-   ROLL INDICATOR (horizon line)
-════════════════════════════════════════ */
-#horizon-wrap {
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  width:min(70vw,70vh);
-  height:min(70vw,70vh);
-  pointer-events:none;
-}
-#horizon-line {
-  position:absolute;
-  top:50%; left:10%;
-  width:80%; height:1px;
-  background:linear-gradient(90deg, transparent, rgba(57,255,20,0.25), rgba(57,255,20,0.25), transparent);
-  transform-origin:center;
-  transition:transform 0.1s linear;
-}
-
-/* ════════════════════════════════════════
-   BOTTOM HUD BAR
-════════════════════════════════════════ */
-#bottom-hud {
-  position:absolute;
-  bottom:0; left:0; right:0;
-  padding:0 12px 12px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  pointer-events:none;
-}
-
-#bottom-row1 {
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-end;
-  gap:8px;
-}
-#bottom-row2 {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:8px;
-}
-
-/* Ammo counter */
-#ammo-panel {
-  background:rgba(2,6,2,0.8);
-  border:1px solid rgba(57,255,20,0.25);
-  padding:8px 14px;
-  text-align:center;
-  clip-path:polygon(6px 0, 100% 0, 100% 100%, 0 100%);
-}
-#ammo-count {
-  font-family:var(--hud);
-  font-size:2rem;
-  font-weight:900;
-  color:var(--g);
-  text-shadow:var(--glow);
-  line-height:1;
-}
-.ammo-label {
-  font-size:0.52rem;
-  letter-spacing:0.2em;
-  color:var(--g2);
-  text-transform:uppercase;
-}
-.ammo-type {
-  font-size:0.55rem;
-  color:var(--amber);
-  letter-spacing:0.1em;
-}
-
-/* Systems status */
-#systems-panel {
-  background:rgba(2,6,2,0.8);
-  border:1px solid rgba(57,255,20,0.2);
-  padding:8px 10px;
-  font-size:0.58rem;
-  line-height:1.9;
-}
-.sys-row { display:flex; justify-content:space-between; gap:16px; }
-.sys-k { color:var(--g2); }
-.sys-v { color:var(--g); font-weight:bold; }
-.sys-v.ok     { color:var(--g); }
-.sys-v.warn   { color:var(--amber); }
-.sys-v.crit   { color:var(--red); animation:blink 0.5s step-end infinite; }
-
-/* Fuel / battery */
-#fuel-panel {
-  background:rgba(2,6,2,0.8);
-  border:1px solid rgba(57,255,20,0.2);
-  padding:8px 10px;
-  text-align:right;
-  clip-path:polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
-}
-.fuel-label { font-size:0.52rem; letter-spacing:0.2em; color:var(--g2); text-transform:uppercase; }
-.fuel-pct {
-  font-family:var(--hud);
-  font-size:1.5rem;
-  font-weight:700;
-  color:var(--g);
-  text-shadow:var(--glow-sm);
-  line-height:1;
-}
-.fuel-pct.low { color:var(--amber); }
-.fuel-pct.crit { color:var(--red); }
-#fuel-bar-wrap { width:100%; height:3px; background:rgba(57,255,20,0.1); margin-top:3px; }
-#fuel-bar { height:100%; background:var(--g); transition:width 2s ease; }
-
-/* FIRE BUTTON */
-#fire-btn {
-  pointer-events:all;
-  width:72px; height:72px;
-  border-radius:50%;
-  background:rgba(255,20,20,0.12);
-  border:2px solid var(--red);
-  color:var(--red);
-  font-family:var(--hud);
-  font-size:0.65rem;
-  font-weight:700;
-  letter-spacing:0.15em;
-  text-transform:uppercase;
   cursor:pointer;
-  text-shadow:0 0 8px var(--red);
-  box-shadow:0 0 16px rgba(255,32,32,0.3), inset 0 0 20px rgba(255,32,32,0.05);
-  transition:all 0.1s;
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0;
-  -webkit-appearance:none;
+  transition:all 0.25s;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  text-decoration:none;
+  color:inherit;
+  display:block;
 }
-#fire-btn:active, #fire-btn.firing {
-  background:rgba(255,32,32,0.4);
-  box-shadow:0 0 40px rgba(255,32,32,0.8), inset 0 0 30px rgba(255,32,32,0.3);
-  transform:scale(0.94);
-}
+.file-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--g),transparent);opacity:0.3;}
+.file-card::after{content:'';position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 14px 14px 0;border-color:transparent var(--border) transparent transparent;}
+.file-card:hover{border-color:var(--g);box-shadow:var(--glow);transform:translateY(-2px);}
+.file-card:hover::before{opacity:0.8;}
 
-/* Ammo type selector */
-#ammo-selector {
-  pointer-events:all;
-  display:flex; flex-direction:column; gap:4px;
-}
-.ammo-btn {
-  font-family:var(--font);
-  font-size:0.58rem;
-  letter-spacing:0.1em;
-  text-transform:uppercase;
-  padding:5px 8px;
-  background:rgba(2,6,2,0.8);
-  border:1px solid rgba(57,255,20,0.2);
-  color:var(--g2);
-  cursor:pointer;
-  clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);
-  transition:all 0.15s;
-}
-.ammo-btn.active {
-  background:rgba(57,255,20,0.12);
-  border-color:var(--g);
-  color:var(--g);
-  box-shadow:var(--glow-sm);
-}
+.fc-type{font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--g2);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.fc-type::after{content:'';flex:1;height:1px;background:var(--border);}
+.fc-name{font-family:var(--hud);font-size:1rem;font-weight:700;color:var(--g);text-shadow:0 0 8px rgba(57,255,20,0.4);margin-bottom:6px;letter-spacing:0.05em;}
+.fc-desc{font-size:0.68rem;color:var(--g2);line-height:1.8;margin-bottom:14px;}
+.fc-features{font-size:0.6rem;color:rgba(57,255,20,0.5);line-height:1.9;}
+.fc-features li{list-style:none;padding-left:14px;position:relative;}
+.fc-features li::before{content:'▸';position:absolute;left:0;color:var(--g);}
 
-/* ════════════════════════════════════════
-   MINI MAP
-════════════════════════════════════════ */
-#minimap-wrap {
-  position:absolute;
-  bottom:160px; right:12px;
-  width:100px; height:100px;
-  pointer-events:none;
-}
-#minimap {
-  width:100%; height:100%;
-  border-radius:50%;
-  border:1px solid rgba(57,255,20,0.3);
-  background:rgba(2,6,2,0.85);
-  overflow:hidden;
-  box-shadow:var(--glow-sm), inset 0 0 20px rgba(0,0,0,0.5);
-}
-#minimap-canvas { width:100%; height:100%; }
-#minimap-label {
-  position:absolute;
-  bottom:-18px; left:50%;
-  transform:translateX(-50%);
-  font-size:0.52rem;
-  letter-spacing:0.15em;
-  color:var(--g2);
-  white-space:nowrap;
-}
+.fc-badge{display:inline-block;font-size:0.5rem;letter-spacing:0.15em;text-transform:uppercase;padding:2px 8px;border:1px solid;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);margin-top:10px;}
+.badge-html{border-color:var(--blue);color:var(--blue);}
+.badge-cpp{border-color:var(--amber);color:var(--amber);}
+.badge-js{border-color:var(--g);color:var(--g);}
+.badge-h{border-color:#ff69b4;color:#ff69b4;}
+.badge-mobile{border-color:var(--red);color:var(--red);}
+.badge-md{border-color:rgba(57,255,20,0.4);color:var(--g2);}
 
-/* ════════════════════════════════════════
-   THREAT ALERT OVERLAY
-════════════════════════════════════════ */
-#threat-overlay {
-  position:fixed; inset:0;
-  pointer-events:none;
-  z-index:7000;
-  opacity:0;
-  transition:opacity 0.2s;
-}
-#threat-overlay.active {
-  opacity:1;
-  border:3px solid var(--red);
-  box-shadow:inset 0 0 60px rgba(255,32,32,0.25);
-  animation:threat-pulse 0.5s ease infinite;
-}
+.fc-ext{position:absolute;bottom:16px;right:18px;font-size:0.65rem;color:rgba(57,255,20,0.25);letter-spacing:0.1em;}
+.fc-size{position:absolute;bottom:16px;left:20px;font-size:0.58rem;color:rgba(57,255,20,0.25);}
 
-#threat-text {
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  font-family:var(--hud);
-  font-size:clamp(1rem,5vw,2rem);
-  font-weight:900;
-  color:var(--red);
-  text-shadow:0 0 20px var(--red);
-  letter-spacing:0.3em;
-  text-transform:uppercase;
-  display:none;
-}
-#threat-overlay.active #threat-text { display:block; }
+/* Build instructions panel */
+#build-panel{max-width:1200px;margin:0 auto 40px;padding:0 40px;}
+.build-box{background:var(--panel);border:1px solid var(--border);padding:20px;}
+.build-title{font-family:var(--hud);font-size:0.72rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--g);text-shadow:0 0 6px rgba(57,255,20,0.4);margin-bottom:16px;}
+.build-section{margin-bottom:16px;}
+.build-section h4{font-size:0.65rem;letter-spacing:0.15em;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
+.code-block{background:var(--bg);border:1px solid var(--border);padding:10px 14px;font-size:0.72rem;color:var(--g);line-height:1.8;overflow-x:auto;}
+.code-block .comment{color:rgba(57,255,20,0.4);}
+.code-block .cmd{color:var(--blue);}
+.code-block .out{color:rgba(57,255,20,0.6);}
 
-/* ════════════════════════════════════════
-   STATUS BAR (very bottom)
-════════════════════════════════════════ */
-#statusbar {
-  position:fixed;
-  bottom:0; left:0; right:0;
-  height:22px;
-  background:rgba(57,255,20,0.08);
-  border-top:1px solid rgba(57,255,20,0.2);
-  display:flex;
-  align-items:center;
-  padding:0 12px;
-  gap:16px;
-  font-size:0.55rem;
-  letter-spacing:0.12em;
-  color:var(--g2);
-  pointer-events:none;
-  z-index:100;
-}
-.sb-sep { color:rgba(57,255,20,0.2); }
-#sb-mode { color:var(--g); font-weight:bold; }
+/* Footer */
+#footer{text-align:center;padding:20px;font-size:0.6rem;color:rgba(57,255,20,0.3);letter-spacing:0.15em;border-top:1px solid var(--border);}
 
-/* ════════════════════════════════════════
-   SHAKE / IMPACT PARTICLE EFFECT
-════════════════════════════════════════ */
-#shake-canvas {
-  position:fixed; inset:0;
-  pointer-events:none;
-  z-index:7500;
-}
-
-/* ════════════════════════════════════════
-   SENSOR PERMISSION PROMPT (iOS)
-════════════════════════════════════════ */
-#perm-toast {
-  position:fixed;
-  top:80px; left:50%;
-  transform:translateX(-50%);
-  background:rgba(2,6,2,0.95);
-  border:1px solid var(--amber);
-  color:var(--amber);
-  font-size:0.68rem;
-  padding:10px 16px;
-  letter-spacing:0.1em;
-  text-align:center;
-  z-index:6000;
-  display:none;
-  max-width:280px;
-}
-
-/* ════════════════════════════════════════
-   TURRET BEARING STRIP (below compass)
-════════════════════════════════════════ */
-#bearing-strip {
-  position:absolute;
-  top:60px; left:50%;
-  transform:translateX(-50%);
-  font-family:var(--hud);
-  font-size:0.62rem;
-  color:var(--g2);
-  letter-spacing:0.1em;
-  white-space:nowrap;
-  pointer-events:none;
-}
-#bearing-dir { color:var(--g); font-weight:bold; }
-
-/* ════════════════════════════════════════
-   ANIMATIONS
-════════════════════════════════════════ */
-@keyframes pulse-glow {
-  0%,100%{text-shadow:0 0 10px rgba(57,255,20,0.5)}
-  50%{text-shadow:0 0 30px rgba(57,255,20,1),0 0 60px rgba(57,255,20,0.5)}
-}
-@keyframes pulse-border {
-  0%,100%{box-shadow:var(--glow)}
-  50%{box-shadow:0 0 30px rgba(57,255,20,0.9),0 0 60px rgba(57,255,20,0.4)}
-}
-@keyframes blink {
-  0%,100%{opacity:1} 50%{opacity:0}
-}
-@keyframes lock-pulse {
-  0%,100%{stroke-opacity:1;r:46} 50%{stroke-opacity:0.3;r:48}
-}
-@keyframes threat-pulse {
-  0%,100%{box-shadow:inset 0 0 60px rgba(255,32,32,0.25)}
-  50%{box-shadow:inset 0 0 120px rgba(255,32,32,0.5)}
-}
-@keyframes shake-anim {
-  0%{transform:translate(0,0)}
-  15%{transform:translate(-8px,4px)}
-  30%{transform:translate(6px,-6px)}
-  45%{transform:translate(-4px,8px)}
-  60%{transform:translate(7px,-3px)}
-  75%{transform:translate(-5px,5px)}
-  90%{transform:translate(4px,-4px)}
-  100%{transform:translate(0,0)}
-}
-.shaking { animation:shake-anim 0.5s ease; }
-
-/* ════════════════════════════════════════
-   SCREEN LOCK MESSAGE
-════════════════════════════════════════ */
-#lock-msg {
-  position:fixed;
-  bottom:130px; left:50%;
-  transform:translateX(-50%);
-  font-size:0.6rem;
-  color:rgba(57,255,20,0.3);
-  letter-spacing:0.15em;
-  text-align:center;
-  pointer-events:none;
-  white-space:nowrap;
-}
-
-/* Range readout on crosshair */
-#range-readout {
-  position:absolute;
-  top:50%; left:calc(50% + min(37vw,37vh) + 10px);
-  transform:translateY(-50%);
-  font-family:var(--hud);
-  font-size:0.7rem;
-  color:var(--g);
-  text-shadow:var(--glow-sm);
-  letter-spacing:0.1em;
-  pointer-events:none;
-  line-height:1.8;
-  white-space:nowrap;
-}
+@keyframes flicker{0%,100%{opacity:1}93%{opacity:1}93.5%{opacity:0.85}94%{opacity:1}97%{opacity:0.9}97.5%{opacity:1}}
+@keyframes fade-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.file-card{animation:fade-in 0.4s ease both;}
+.file-card:nth-child(1){animation-delay:0.05s}
+.file-card:nth-child(2){animation-delay:0.1s}
+.file-card:nth-child(3){animation-delay:0.15s}
+.file-card:nth-child(4){animation-delay:0.2s}
+.file-card:nth-child(5){animation-delay:0.25s}
+.file-card:nth-child(6){animation-delay:0.3s}
+.file-card:nth-child(7){animation-delay:0.35s}
 </style>
 </head>
 <body>
 
-<!-- ════════════ BOOT / PERMISSION SCREEN ════════════ -->
-<div id="boot">
-  <div class="boot-logo">⊕ IRON COMMAND<br><span style="font-size:0.5em;letter-spacing:0.3em;">L I V E</span></div>
-  <div class="boot-sub">
-    Your device is the tank<br>
-    Real sensors. Real time.
-  </div>
-  <div class="boot-desc">
-    <span>📐 Gyroscope</span> → Gun elevation & turret aim<br>
-    <span>🧭 Compass</span> → Real heading & bearing<br>
-    <span>📍 GPS</span> → Live battlefield position<br>
-    <span>⚡ Accelerometer</span> → Speed & impact detection<br>
-    <span>🔋 Battery</span> → Fuel gauge<br>
-    <span>📳 Vibration</span> → Haptic fire & hit feedback
-  </div>
-  <button id="activate-btn" onclick="activateSystems()">
-    ▶ ACTIVATE SYSTEMS
-  </button>
-  <div id="sensor-status">Awaiting activation...</div>
-</div>
-
-<!-- ════════════ PERMISSION TOAST ════════════ -->
-<div id="perm-toast"></div>
-
-<!-- ════════════ MAIN HUD ════════════ -->
-<div id="hud">
-
-  <!-- Impact/Fire flashes -->
-  <div id="impact-flash"></div>
-  <div id="fire-flash"></div>
-  <div id="threat-overlay"><div id="threat-text">⚠ INCOMING ⚠</div></div>
-
-  <!-- Shake/explosion canvas -->
-  <canvas id="shake-canvas"></canvas>
-
-  <!-- ── COMPASS TAPE ── -->
-  <div id="compass-wrap">
-    <div id="compass-tape">
-      <div id="compass-inner"></div>
-      <div id="compass-center"></div>
-    </div>
-    <div id="compass-heading">HDG 000° N</div>
-  </div>
-
-  <!-- ── BEARING ── -->
-  <div id="bearing-strip">TUR <span id="bearing-dir">000°</span> | TGT <span id="target-bear">---°</span></div>
-
-  <!-- ── MAIN CROSSHAIR SIGHT ── -->
-  <div id="sight-wrap">
-    <svg id="sight-svg" viewBox="0 0 100 100">
-      <defs>
-        <radialGradient id="sightGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="rgba(57,255,20,0.0)"/>
-          <stop offset="85%" stop-color="rgba(57,255,20,0.0)"/>
-          <stop offset="100%" stop-color="rgba(57,255,20,0.06)"/>
-        </radialGradient>
-      </defs>
-
-      <!-- Outer ring -->
-      <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(57,255,20,0.2)" stroke-width="0.5"/>
-      <!-- Mid ring -->
-      <circle cx="50" cy="50" r="32" fill="none" stroke="rgba(57,255,20,0.15)" stroke-width="0.3"/>
-      <!-- Inner ring -->
-      <circle cx="50" cy="50" r="16" fill="none" stroke="rgba(57,255,20,0.25)" stroke-width="0.5"/>
-
-      <!-- Lock ring (animated) -->
-      <circle id="lock-ring" cx="50" cy="50" r="46"/>
-
-      <!-- Background gradient -->
-      <circle cx="50" cy="50" r="48" fill="url(#sightGrad)"/>
-
-      <!-- Rotating reticle group -->
-      <g id="reticle-group">
-        <!-- Main crosshair lines -->
-        <line x1="50" y1="2" x2="50" y2="34" stroke="#39ff14" stroke-width="0.8" opacity="0.9"/>
-        <line x1="50" y1="66" x2="50" y2="98" stroke="#39ff14" stroke-width="0.8" opacity="0.9"/>
-        <line x1="2" y1="50" x2="34" y2="50" stroke="#39ff14" stroke-width="0.8" opacity="0.9"/>
-        <line x1="66" y1="50" x2="98" y2="50" stroke="#39ff14" stroke-width="0.8" opacity="0.9"/>
-
-        <!-- Tick marks outer -->
-        <line x1="50" y1="2" x2="50" y2="5" stroke="#39ff14" stroke-width="1.2"/>
-        <line x1="50" y1="95" x2="50" y2="98" stroke="#39ff14" stroke-width="1.2"/>
-        <line x1="2" y1="50" x2="5" y2="50" stroke="#39ff14" stroke-width="1.2"/>
-        <line x1="95" y1="50" x2="98" y2="50" stroke="#39ff14" stroke-width="1.2"/>
-
-        <!-- Diagonal ticks at 45° -->
-        <line x1="16" y1="16" x2="19" y2="19" stroke="rgba(57,255,20,0.5)" stroke-width="0.6"/>
-        <line x1="84" y1="16" x2="81" y2="19" stroke="rgba(57,255,20,0.5)" stroke-width="0.6"/>
-        <line x1="16" y1="84" x2="19" y2="81" stroke="rgba(57,255,20,0.5)" stroke-width="0.6"/>
-        <line x1="84" y1="84" x2="81" y2="81" stroke="rgba(57,255,20,0.5)" stroke-width="0.6"/>
-
-        <!-- Range marks horizontal (mil scale) -->
-        <g class="range-marks">
-          <!-- Above center: range brackets -->
-          <line x1="38" y1="40" x2="62" y2="40" stroke="rgba(57,255,20,0.3)" stroke-width="0.4"/>
-          <line x1="41" y1="44" x2="59" y2="44" stroke="rgba(57,255,20,0.25)" stroke-width="0.3"/>
-          <line x1="44" y1="47" x2="56" y2="47" stroke="rgba(57,255,20,0.2)" stroke-width="0.3"/>
-          <!-- Below -->
-          <line x1="38" y1="60" x2="62" y2="60" stroke="rgba(57,255,20,0.3)" stroke-width="0.4"/>
-          <line x1="41" y1="56" x2="59" y2="56" stroke="rgba(57,255,20,0.25)" stroke-width="0.3"/>
-          <!-- Range labels -->
-          <text x="63" y="40.5" class="range-mark-label">2km</text>
-          <text x="63" y="44.5" class="range-mark-label">1km</text>
-          <text x="63" y="60.5" class="range-mark-label">2km</text>
-        </g>
-      </g>
-
-      <!-- Center dot -->
-      <circle cx="50" cy="50" r="0.8" fill="#39ff14" opacity="0.9"/>
-
-      <!-- Corner brackets -->
-      <path d="M4,10 L4,4 L10,4" fill="none" stroke="rgba(57,255,20,0.6)" stroke-width="0.8"/>
-      <path d="M90,4 L96,4 L96,10" fill="none" stroke="rgba(57,255,20,0.6)" stroke-width="0.8"/>
-      <path d="M4,90 L4,96 L10,96" fill="none" stroke="rgba(57,255,20,0.6)" stroke-width="0.8"/>
-      <path d="M96,90 L96,96 L90,96" fill="none" stroke="rgba(57,255,20,0.6)" stroke-width="0.8"/>
-    </svg>
-  </div>
-
-  <!-- ── HORIZON/ROLL INDICATOR ── -->
-  <div id="horizon-wrap">
-    <div id="horizon-line"></div>
-  </div>
-
-  <!-- ── RANGE READOUT ── -->
-  <div id="range-readout">
-    <div id="rr-range" style="color:var(--g);">RNG: —m</div>
-    <div id="rr-elev"  style="color:var(--g2);">ELV: —°</div>
-    <div id="rr-tof"   style="color:rgba(57,255,20,0.4);">TOF: —s</div>
-  </div>
-
-  <!-- ── GUN ELEVATION ── -->
-  <div id="elevation-panel">
-    <span class="elev-label">ELEV</span>
-    <div id="elev-track">
-      <div id="elev-zero"></div>
-      <!-- Tick marks -->
-      <div class="elev-tick" style="top:10%"></div>
-      <div class="elev-tick" style="top:25%"></div>
-      <div class="elev-tick" style="top:50%"></div>
-      <div class="elev-tick" style="top:75%"></div>
-      <div class="elev-tick" style="top:90%"></div>
-      <div id="elev-indicator"></div>
-    </div>
-    <div id="elev-value">+0.0°</div>
-  </div>
-
-  <!-- ── RIGHT PANEL ── -->
-  <div id="right-panel">
-    <div class="rp-block">
-      <span class="rp-label">SPEED</span>
-      <span class="rp-val" id="rp-speed">0</span>
-      <span class="rp-unit">km/h</span>
-    </div>
-    <div class="rp-block">
-      <span class="rp-label">G-FORCE</span>
-      <span class="rp-val" id="rp-g">0.0</span>
-      <span class="rp-unit">g</span>
-    </div>
-    <div class="rp-block">
-      <span class="rp-label">ROLL</span>
-      <span class="rp-val" id="rp-roll">0°</span>
-      <span class="rp-unit">bank</span>
-    </div>
-    <div class="rp-block">
-      <span class="rp-label">TEMP</span>
-      <span class="rp-val" id="rp-temp">—°C</span>
-      <span class="rp-unit">engine</span>
-    </div>
-  </div>
-
-  <!-- ── GPS COORDINATES ── -->
-  <div id="coords-panel">
-    <div class="coord-row"><span class="coord-key">LAT</span><span class="coord-val acquiring" id="coord-lat">ACQUIRING</span></div>
-    <div class="coord-row"><span class="coord-key">LON</span><span class="coord-val acquiring" id="coord-lon">ACQUIRING</span></div>
-    <div class="coord-row"><span class="coord-key">ALT</span><span class="coord-val" id="coord-alt">—m</span></div>
-    <div class="coord-row"><span class="coord-key">ACC</span><span class="coord-val" id="coord-acc">—m</span></div>
-    <div id="gps-accuracy-bar"><div id="gps-accuracy-fill" style="width:0%"></div></div>
-  </div>
-
-  <!-- ── TOP RIGHT INFO ── -->
-  <div id="topright-panel">
-    <div class="coord-row"><span class="coord-key">SYS</span><span class="coord-val" id="tr-sys" style="color:var(--g)">NOMINAL</span></div>
-    <div class="coord-row"><span class="coord-key">APS</span><span class="coord-val" id="tr-aps" style="color:var(--g)">ACTIVE</span></div>
-    <div class="coord-row"><span class="coord-key">FCS</span><span class="coord-val" id="tr-fcs" style="color:var(--g)">LOCKED</span></div>
-    <div class="coord-row"><span class="coord-key">NBC</span><span class="coord-val" id="tr-nbc" style="color:var(--g)">CLEAR</span></div>
-  </div>
-
-  <!-- ── MINIMAP ── -->
-  <div id="minimap-wrap">
-    <div id="minimap">
-      <canvas id="minimap-canvas" width="100" height="100"></canvas>
-    </div>
-    <div id="minimap-label">TACTICAL MAP</div>
-  </div>
-
-  <!-- ── BOTTOM HUD ── -->
-  <div id="bottom-hud">
-    <div id="bottom-row1">
-      <!-- Ammo type selector -->
-      <div id="ammo-selector" style="pointer-events:all;">
-        <button class="ammo-btn active" onclick="setAmmo('APFSDS',this)">APFSDS</button>
-        <button class="ammo-btn" onclick="setAmmo('HEAT',this)">HEAT</button>
-        <button class="ammo-btn" onclick="setAmmo('HE',this)">HE-FRAG</button>
-        <button class="ammo-btn" onclick="setAmmo('SMKE',this)">SMOKE</button>
-      </div>
-
-      <!-- FIRE BUTTON -->
-      <button id="fire-btn" ontouchstart="fireGun(event)" onclick="fireGun(event)">FIRE</button>
-
-      <!-- Ammo counter -->
-      <div id="ammo-panel">
-        <div class="ammo-label">ROUNDS</div>
-        <div id="ammo-count">42</div>
-        <div class="ammo-type" id="ammo-type-disp">APFSDS</div>
-      </div>
-    </div>
-
-    <div id="bottom-row2">
-      <!-- Systems -->
-      <div id="systems-panel">
-        <div class="sys-row">
-          <span class="sys-k">ENGINE</span><span class="sys-v ok" id="sys-eng">NOMINAL</span>
-          <span class="sys-k">TRACKS</span><span class="sys-v ok" id="sys-trk">100%</span>
-        </div>
-        <div class="sys-row">
-          <span class="sys-k">COMM</span><span class="sys-v ok" id="sys-com">ONLINE</span>
-          <span class="sys-k">SENSOR</span><span class="sys-v" id="sys-sens">—</span>
-        </div>
-      </div>
-
-      <!-- Fuel -->
-      <div id="fuel-panel">
-        <div class="fuel-label">⚡ FUEL</div>
-        <div class="fuel-pct" id="fuel-pct">—%</div>
-        <div id="fuel-bar-wrap"><div id="fuel-bar" style="width:0%"></div></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="lock-msg">TILT DEVICE TO AIM · TAP FIRE TO SHOOT</div>
-
-  <!-- ── STATUS BAR ── -->
-  <div id="statusbar">
-    <span id="sb-mode">◉ COMBAT READY</span>
-    <span class="sb-sep">│</span>
-    <span id="sb-ammo-type">APFSDS</span>
-    <span class="sb-sep">│</span>
-    <span id="sb-time">00:00:00</span>
-    <span class="sb-sep">│</span>
-    <span id="sb-sensor-count">Sensors: 0</span>
+<div id="hero">
+  <div class="hero-ascii"> ██╗██████╗  ██████╗ ███╗   ██╗     ██████╗ ██████╗ ███╗   ███╗███╗   ███╗ █████╗ ███╗  ██╗██████╗
+ ██║██╔══██╗██╔═══██╗████╗  ██║    ██╔════╝██╔═══██╗████╗ ████║████╗ ████║██╔══██╗████╗ ██║██╔══██╗
+ ██║██████╔╝██║   ██║██╔██╗ ██║    ██║     ██║   ██║██╔████╔██║██╔████╔██║███████║██╔██╗██║██║  ██║
+ ██║██╔══██╗██║   ██║██║╚████║    ██║     ██║   ██║██║╚██╔╝██║██║╚██╔╝██║██╔══██║██║╚████║██║  ██║
+ ██║██║  ██║╚██████╔╝██║ ╚███║    ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║ ╚═╝ ██║██║  ██║██║ ╚███║██████╔╝
+ ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚══╝    ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚══╝╚═════╝</div>
+  <div class="hero-sub">Battle Tank Engineering Suite</div>
+  <div class="hero-desc">
+    Multi-file project · Real device sensors · Live physics engine · C++ backend · GitHub Pages ready
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════
-     JAVASCRIPT ENGINE
-════════════════════════════════════════════════ -->
-<script>
-'use strict';
+<div id="file-grid">
+
+  <!-- tank-live.html -->
+  <a class="file-card" href="tank-live.html">
+    <div class="fc-type">Mobile HUD <span class="fc-badge badge-mobile">PHONE</span></div>
+    <div class="fc-name">tank-live.html</div>
+    <div class="fc-desc">Your phone IS the tank. Real device sensors power every element of the HUD in real time.</div>
+    <ul class="fc-features">
+      <li>Gyroscope → gun elevation + reticle stabilisation</li>
+      <li>Compass → live heading tape</li>
+      <li>GPS → battlefield position + trail on minimap</li>
+      <li>Accelerometer → impact detection + shake</li>
+      <li>Battery → fuel gauge</li>
+      <li>Vibration API → haptic fire + hit feedback</li>
+      <li>Fire button + ammo selector + reload timer</li>
+    </ul>
+    <div class="fc-ext">.html</div>
+    <div class="fc-size">~60 KB</div>
+  </a>
+
+  <!-- commander.html -->
+  <a class="file-card" href="commander.html">
+    <div class="fc-type">Desktop Station <span class="fc-badge badge-html">HTML</span></div>
+    <div class="fc-name">commander.html</div>
+    <div class="fc-desc">Commander's station with tactical map, live sensor feed, fire control computer, and threat matrix. Pairs with tank-live.html.</div>
+    <ul class="fc-features">
+      <li>Tactical map with animated unit positions</li>
+      <li>Live mobile sensor feed (simulated link)</li>
+      <li>FCS calculator using physics.js engine</li>
+      <li>Penetration vs range chart (Chart.js)</li>
+      <li>Threat matrix with P(kill) assessment</li>
+      <li>Trajectory visualisation canvas</li>
+    </ul>
+    <div class="fc-ext">.html</div>
+    <div class="fc-size">~42 KB</div>
+  </a>
+
+  <!-- physics.js -->
+  <a class="file-card" href="physics.js" target="_blank">
+    <div class="fc-type">Shared Engine <span class="fc-badge badge-js">JS</span></div>
+    <div class="fc-name">physics.js</div>
+    <div class="fc-desc">Complete physics library used by all HTML files. Mirrors ballistics.h for cross-platform consistency. Include with &lt;script src="physics.js"&gt;.</div>
+    <ul class="fc-features">
+      <li>IronPhysics.ballistics — RK4 trajectory + de Marre pen</li>
+      <li>IronPhysics.atmosphere — ISA model, Mach, drag Cd</li>
+      <li>IronPhysics.engine — power curves, PTW, range</li>
+      <li>IronPhysics.sensors — EMA filter, compass wrap, impact detect</li>
+      <li>IronPhysics.combat — FCS solution, armor check</li>
+      <li>CommonJS compatible (Node.js)</li>
+    </ul>
+    <div class="fc-ext">.js</div>
+    <div class="fc-size">~18 KB</div>
+  </a>
+
+  <!-- ballistics.h -->
+  <a class="file-card" href="ballistics.h" target="_blank">
+    <div class="fc-type">C++ Header <span class="fc-badge badge-h">C++ HEADER</span></div>
+    <div class="fc-name">ballistics.h</div>
+    <div class="fc-desc">Full C++17 physics header. Single-include. Namespace IronPhysics with all classes. Mirrors physics.js for identical results.</div>
+    <ul class="fc-features">
+      <li>Atmosphere — ISA density, sound speed, Mach</li>
+      <li>DragModel — piecewise Cd-Mach per type</li>
+      <li>TrajectoryCalculator — RK4 integrator</li>
+      <li>PenetrationCalculator — Alekseevski-Tate + Munroe</li>
+      <li>ArmorCalculator — layers, slope, Tate obliquity</li>
+      <li>EngineCalculator — power, PTW, range, GP</li>
+      <li>FireControl — complete FCS solution</li>
+      <li>Reporter — ASCII terminal output formatter</li>
+    </ul>
+    <div class="fc-ext">.h</div>
+    <div class="fc-size">~22 KB</div>
+  </a>
+
+  <!-- main_ballistics.cpp -->
+  <a class="file-card" href="main_ballistics.cpp" target="_blank">
+    <div class="fc-type">C++ CLI Tool <span class="fc-badge badge-cpp">C++17</span></div>
+    <div class="fc-name">main_ballistics.cpp</div>
+    <div class="fc-desc">Compilable command-line ballistics calculator. Interactive menu + quick mode + batch scenarios. Compile with g++ -O2 -std=c++17.</div>
+    <ul class="fc-features">
+      <li>Interactive menu: 6 modules</li>
+      <li>Ballistics calculator + pen vs range table</li>
+      <li>Armor analyzer + slope table</li>
+      <li>Engine performance + progress bars</li>
+      <li>Quick FCS solution with lead</li>
+      <li>Preset scenarios (WWII → modern)</li>
+      <li>--quick and --scenarios CLI flags</li>
+    </ul>
+    <div class="fc-ext">.cpp</div>
+    <div class="fc-size">~16 KB</div>
+  </a>
+
+  <!-- iron-command.html -->
+  <a class="file-card" href="iron-command.html">
+    <div class="fc-type">Full Engineering Suite <span class="fc-badge badge-html">HTML</span></div>
+    <div class="fc-name">iron-command.html</div>
+    <div class="fc-desc">The original standalone engineering suite. 8 modules, 30+ languages in the tank database, 19 historical tanks, full configurator.</div>
+    <ul class="fc-features">
+      <li>HQ command center with animated radar</li>
+      <li>Tank configurator with live stats</li>
+      <li>Ballistics + armor calculators</li>
+      <li>Engine performance simulator</li>
+      <li>Battle damage simulator (clickable SVG)</li>
+      <li>Historical database with radar comparison</li>
+      <li>Mission planner with click-to-place map</li>
+    </ul>
+    <div class="fc-ext">.html</div>
+    <div class="fc-size">~124 KB</div>
+  </a>
+
+  <!-- README -->
+  <a class="file-card" href="README.md" target="_blank">
+    <div class="fc-type">Documentation <span class="fc-badge badge-md">MARKDOWN</span></div>
+    <div class="fc-name">README.md</div>
+    <div class="fc-desc">Full project documentation. GitHub Pages setup, C++ build instructions, physics algorithms explained, API reference.</div>
+    <ul class="fc-features">
+      <li>GitHub Pages deployment guide</li>
+      <li>C++ build instructions (Linux/Mac/Windows)</li>
+      <li>physics.js API reference</li>
+      <li>Algorithm documentation (RK4, Tate, Munroe)</li>
+      <li>Sensor API browser compatibility table</li>
+      <li>Project structure diagram</li>
+    </ul>
+    <div class="fc-ext">.md</div>
+    <div class="fc-size">~8 KB</div>
+  </a>
+
+</div>
+
+<!-- BUILD INSTRUCTIONS -->
+<div id="build-panel">
+  <div class="build-box">
+    <div class="build-title">⚙ Build & Deploy Instructions</div>
+
+    <div class="build-section">
+      <h4>🌐 GitHub Pages (Web — Zero Install)</h4>
+      <div class="code-block">
+<span class="comment"># 1. Upload ALL files to a GitHub repo root</span><br>
+<span class="comment"># 2. Settings → Pages → Branch: main → Save</span><br>
+<span class="comment"># 3. Visit https://yourusername.github.io/iron-command/</span><br>
+<span class="comment"># 4. tank-live.html MUST use HTTPS for sensors to work</span>
+      </div>
+    </div>
+
+    <div class="build-section">
+      <h4>🔬 C++ Ballistics Engine (Linux / macOS)</h4>
+      <div class="code-block">
+<span class="cmd">g++ -O2 -std=c++17 -o ironballistics main_ballistics.cpp</span><br>
+<span class="cmd">./ironballistics</span><br>
+<span class="out">  # Interactive menu with 6 modules</span><br><br>
+<span class="cmd">./ironballistics --quick 120 1650 apfsds 2000</span><br>
+<span class="out">  apfsds 120mm @ 1650m/s:</span><br>
+<span class="out">    Range:  2000.00 m</span><br>
+<span class="out">    ToF:    1.23 s</span><br>
+<span class="out">    Vimp:   1541.20 m/s</span><br>
+<span class="out">    Drop:   74.12 mm</span>
+      </div>
+    </div>
+
+    <div class="build-section">
+      <h4>🔬 C++ (Windows — MSVC)</h4>
+      <div class="code-block">
+<span class="cmd">cl /O2 /std:c++17 main_ballistics.cpp /Fe:ironballistics.exe</span><br>
+<span class="cmd">ironballistics.exe</span>
+      </div>
+    </div>
+
+    <div class="build-section">
+      <h4>🟡 Node.js — Use physics.js as module</h4>
+      <div class="code-block">
+<span class="comment">// In Node.js script:</span><br>
+<span class="cmd">const IronPhysics = require('./physics.js');</span><br>
+<span class="cmd">const traj = IronPhysics.ballistics.trajectory({</span><br>
+<span class="cmd">  v0:1650, mass:4.8, caliber:0.120, elevDeg:3.5,</span><br>
+<span class="cmd">  type:'apfsds', maxRange:4000, dt:0.005</span><br>
+<span class="cmd">});</span><br>
+<span class="cmd">console.log('Range:', traj.maxRange, 'm');</span>
+      </div>
+    </div>
+
+    <div class="build-section">
+      <h4>📱 Mobile Sensor Requirements</h4>
+      <div class="code-block">
+<span class="comment"># HTTPS required for all sensor APIs</span><br>
+<span class="comment"># iOS 13+ → DeviceOrientationEvent.requestPermission() needed</span><br>
+<span class="comment"># Android Chrome → permissions auto-granted on HTTPS</span><br>
+<span class="comment"># GPS → allow location in browser popup</span><br>
+<span class="comment"># Battery → Chrome/Edge only (Firefox/Safari limited)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="footer">
+  IRON COMMAND v2.0 · Multi-file Tank Engineering Suite · GitHub Pages Ready<br>
+  7 files · HTML + C++ + JavaScript · Real device sensors · Phosphor CRT aesthetic
+</div>
 
-/* ══════════════════════════════════════════
-   STATE
-══════════════════════════════════════════ */
-const S = {
-  // Orientation (degrees)
-  alpha: 0,   // compass heading (0-360, true north = 0)
-  beta:  0,   // front-back tilt (-90 to +90)
-  gamma: 0,   // left-right tilt (-90 to +90)
-
-  // Acceleration
-  ax: 0, ay: 0, az: 0,   // raw accel (m/s²)
-  gForce: 1.0,
-
-  // GPS
-  lat: null, lon: null, alt: null,
-  gpsAcc: null, gpsSpeed: 0,
-  gpsBearing: null,
-  gpsTrail: [],  // [{lat,lon}]
-
-  // Systems
-  ammo: 42,
-  ammoType: 'APFSDS',
-  ammoTypes: {APFSDS:42, HEAT:16, 'HE-FRAG':24, SMOKE:8},
-  fuelPct: null,
-  firing: false,
-  hitCount: 0,
-
-  // Sensors online
-  gyroOk: false,
-  gpsOk: false,
-  accelOk: false,
-  compassOk: false,
-
-  // Impact detection
-  lastG: 1.0,
-  shakeThreshold: 18,  // m/s²
-
-  // Engine temp simulation
-  engineTemp: 85,
-
-  // Alpha smoothing
-  alphaSmooth: 0,
-  betaSmooth: 0,
-  gammaSmooth: 0,
-
-  // Reticle roll
-  reticleRoll: 0,
-
-  // Target acquired simulation
-  lockPct: 0,
-};
-
-/* ══════════════════════════════════════════
-   COMPASS TAPE BUILD
-══════════════════════════════════════════ */
-const COMPASS_MARKS = [];
-for (let d = -720; d <= 720; d += 5) {
-  const nd = ((d % 360) + 360) % 360;
-  const dirs = {0:'N',45:'NE',90:'E',135:'SE',180:'S',225:'SW',270:'W',315:'NW'};
-  COMPASS_MARKS.push({ d, nd, label: dirs[nd] || (nd % 90 === 0 ? null : (nd % 10 === 0 ? String(nd) : null)) });
-}
-
-function buildCompassTape() {
-  const inner = document.getElementById('compass-inner');
-  inner.innerHTML = '';
-  const W = 14; // px per 5 degrees
-  COMPASS_MARKS.forEach(m => {
-    const span = document.createElement('span');
-    span.style.cssText = `display:inline-flex;align-items:center;justify-content:center;width:${W}px;flex-shrink:0;`;
-    if (m.label) {
-      const isMain = ['N','S','E','W'].includes(m.label);
-      span.className = isMain ? 'c-major' : 'c-minor';
-      span.textContent = m.label;
-    } else {
-      // tick
-      const tick = document.createElement('span');
-      tick.style.cssText = 'display:inline-block;width:1px;height:' + (m.nd % 10 === 0 ? '10px' : '6px') + ';background:rgba(57,255,20,0.3);';
-      span.appendChild(tick);
-    }
-    inner.appendChild(span);
-  });
-  return W;
-}
-
-const TAPE_W = buildCompassTape();
-const TAPE_TOTAL = COMPASS_MARKS.length * TAPE_W;
-const TAPE_ZERO_OFFSET = 720 / 5 * TAPE_W; // pixel offset for 0 degrees
-
-function updateCompassTape(heading) {
-  const inner = document.getElementById('compass-inner');
-  const tape  = document.getElementById('compass-tape');
-  const tapeWidth = tape.offsetWidth || 260;
-  const center = tapeWidth / 2;
-  // pixels per degree
-  const pxPerDeg = TAPE_W / 5;
-  const offset = TAPE_ZERO_OFFSET + heading * pxPerDeg;
-  inner.style.transform = `translateX(${center - offset}px)`;
-}
-
-/* ══════════════════════════════════════════
-   ACTIVATE SYSTEMS
-══════════════════════════════════════════ */
-async function activateSystems() {
-  const status = document.getElementById('sensor-status');
-  status.innerHTML = 'Requesting permissions...';
-
-  let sensorCount = 0;
-
-  // ── iOS DeviceOrientation Permission ──
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try {
-      const r = await DeviceOrientationEvent.requestPermission();
-      if (r === 'granted') {
-        sensorCount++;
-        status.innerHTML += '\n<span class="sensor-ok">✓ Gyroscope/Compass: ONLINE</span>';
-      } else {
-        status.innerHTML += '\n<span class="sensor-warn">⚠ Orientation: DENIED</span>';
-      }
-    } catch(e) {
-      status.innerHTML += '\n<span class="sensor-warn">⚠ Orientation: ' + e.message + '</span>';
-    }
-  } else if (typeof DeviceOrientationEvent !== 'undefined') {
-    sensorCount++;
-    status.innerHTML += '\n<span class="sensor-ok">✓ Gyroscope/Compass: ONLINE</span>';
-  }
-
-  // ── iOS DeviceMotion Permission ──
-  if (typeof DeviceMotionEvent !== 'undefined' &&
-      typeof DeviceMotionEvent.requestPermission === 'function') {
-    try {
-      const r = await DeviceMotionEvent.requestPermission();
-      if (r === 'granted') {
-        sensorCount++;
-        status.innerHTML += '\n<span class="sensor-ok">✓ Accelerometer: ONLINE</span>';
-      }
-    } catch(e) {}
-  } else if (typeof DeviceMotionEvent !== 'undefined') {
-    sensorCount++;
-    status.innerHTML += '\n<span class="sensor-ok">✓ Accelerometer: ONLINE</span>';
-  }
-
-  // Attach events
-  window.addEventListener('deviceorientation', handleOrientation, true);
-  window.addEventListener('devicemotionabsolute', handleMotion, true);
-  window.addEventListener('devicemotion', handleMotion, true);
-
-  // ── GPS ──
-  status.innerHTML += '\n<span class="sensor-ok">⌛ GPS: Acquiring...</span>';
-  startGPS();
-
-  // ── Battery ──
-  if (navigator.getBattery) {
-    navigator.getBattery().then(bat => {
-      updateBattery(bat);
-      bat.addEventListener('levelchange', () => updateBattery(bat));
-    });
-    status.innerHTML += '\n<span class="sensor-ok">✓ Battery API: ONLINE</span>';
-    sensorCount++;
-  } else {
-    S.fuelPct = 78; // simulate
-    status.innerHTML += '\n<span class="sensor-warn">⚠ Battery: Simulated</span>';
-  }
-
-  // ── Wake Lock ──
-  if ('wakeLock' in navigator) {
-    try {
-      await navigator.wakeLock.request('screen');
-      status.innerHTML += '\n<span class="sensor-ok">✓ Screen Lock: ACTIVE (stays on)</span>';
-    } catch(e) {}
-  }
-
-  document.getElementById('sb-sensor-count').textContent = `Sensors: ${sensorCount} online`;
-  document.getElementById('sys-sens').textContent = sensorCount + ' ONLINE';
-  document.getElementById('sys-sens').className = 'sys-v ' + (sensorCount >= 2 ? 'ok' : 'warn');
-
-  // Launch after brief delay
-  setTimeout(() => {
-    document.getElementById('boot').classList.add('gone');
-    document.getElementById('hud').classList.add('active');
-    startHUDLoop();
-    startMinimapLoop();
-    buildMinimap();
-    setTimeout(startClock, 100);
-    document.getElementById('lock-msg').style.display = 'block';
-  }, 1200);
-}
-
-/* ══════════════════════════════════════════
-   ORIENTATION HANDLER
-   alpha = compass heading (0=N, 90=E, 180=S, 270=W)
-   beta  = front/back tilt
-   gamma = left/right tilt
-══════════════════════════════════════════ */
-function handleOrientation(e) {
-  const alpha = e.alpha || 0;   // compass
-  const beta  = e.beta  || 0;   // pitch
-  const gamma = e.gamma || 0;   // roll
-
-  // Smooth filtering (exponential)
-  const k = 0.12;
-  // Handle compass wrap-around (0/360 boundary)
-  let dAlpha = alpha - S.alphaSmooth;
-  if (dAlpha > 180) dAlpha -= 360;
-  if (dAlpha < -180) dAlpha += 360;
-  S.alphaSmooth = S.alphaSmooth + k * dAlpha;
-  if (S.alphaSmooth < 0) S.alphaSmooth += 360;
-  if (S.alphaSmooth >= 360) S.alphaSmooth -= 360;
-
-  S.betaSmooth  = S.betaSmooth  + k * (beta  - S.betaSmooth);
-  S.gammaSmooth = S.gammaSmooth + k * (gamma - S.gammaSmooth);
-
-  S.alpha = S.alphaSmooth;
-  S.beta  = S.betaSmooth;
-  S.gamma = S.gammaSmooth;
-  S.gyroOk = true;
-  S.compassOk = true;
-}
-
-/* ══════════════════════════════════════════
-   MOTION / ACCELEROMETER HANDLER
-══════════════════════════════════════════ */
-let lastShakeTime = 0;
-function handleMotion(e) {
-  const acc = e.accelerationIncludingGravity;
-  if (!acc) return;
-  S.ax = acc.x || 0;
-  S.ay = acc.y || 0;
-  S.az = acc.z || 0;
-  S.accelOk = true;
-
-  // G-force magnitude
-  const mag = Math.sqrt(S.ax**2 + S.ay**2 + S.az**2);
-  S.gForce = mag / 9.81;
-
-  // Shake / impact detection
-  const delta = Math.abs(mag - 9.81 * S.lastG);
-  S.lastG = S.gForce;
-  if (delta > S.shakeThreshold) {
-    const now = Date.now();
-    if (now - lastShakeTime > 1000) {
-      lastShakeTime = now;
-      triggerImpact();
-    }
-  }
-
-  // Simulate speed from accel if no GPS
-  if (!S.gpsOk) {
-    const lateralG = Math.sqrt(S.ax**2 + S.ay**2);
-    S.gpsSpeed = Math.max(0, S.gpsSpeed + (lateralG - 0.1) * 0.5);
-    S.gpsSpeed = Math.min(72, S.gpsSpeed);
-    if (lateralG < 0.15) S.gpsSpeed = Math.max(0, S.gpsSpeed - 0.3);
-  }
-}
-
-/* ══════════════════════════════════════════
-   GPS
-══════════════════════════════════════════ */
-function startGPS() {
-  if (!navigator.geolocation) {
-    document.getElementById('coord-lat').textContent = 'NO GPS';
-    document.getElementById('coord-lon').textContent = 'NO GPS';
-    return;
-  }
-  navigator.geolocation.watchPosition(
-    pos => {
-      S.lat = pos.coords.latitude;
-      S.lon = pos.coords.longitude;
-      S.alt = pos.coords.altitude;
-      S.gpsAcc = pos.coords.accuracy;
-      S.gpsSpeed = (pos.coords.speed || 0) * 3.6; // m/s → km/h
-      S.gpsBearing = pos.coords.heading;
-      S.gpsOk = true;
-
-      // Trail
-      S.gpsTrail.push({lat:S.lat, lon:S.lon});
-      if (S.gpsTrail.length > 200) S.gpsTrail.shift();
-
-      updateGPSDisplay();
-      updateMinimapTrail();
-    },
-    err => {
-      console.warn('GPS error', err.code, err.message);
-      const msgs = {1:'DENIED',2:'UNAVAILABLE',3:'TIMEOUT'};
-      document.getElementById('coord-lat').textContent = msgs[err.code]||'ERROR';
-      document.getElementById('coord-lat').className = 'coord-val';
-      document.getElementById('coord-lat').style.color = 'var(--amber)';
-    },
-    { enableHighAccuracy:true, maximumAge:0, timeout:20000 }
-  );
-}
-
-function updateGPSDisplay() {
-  const latEl = document.getElementById('coord-lat');
-  const lonEl = document.getElementById('coord-lon');
-  latEl.classList.remove('acquiring');
-  lonEl.classList.remove('acquiring');
-  latEl.textContent = S.lat.toFixed(5) + (S.lat >= 0 ? '°N' : '°S');
-  lonEl.textContent = S.lon.toFixed(5) + (S.lon >= 0 ? '°E' : '°W');
-  document.getElementById('coord-alt').textContent = S.alt ? Math.round(S.alt)+'m' : '—m';
-  document.getElementById('coord-acc').textContent = S.gpsAcc ? '±'+Math.round(S.gpsAcc)+'m' : '—m';
-  // Accuracy bar (100m = 0%, 1m = 100%)
-  const acc = Math.min(100, Math.max(0, 100 - (S.gpsAcc / 100 * 100)));
-  document.getElementById('gps-accuracy-fill').style.width = acc + '%';
-}
-
-/* ══════════════════════════════════════════
-   BATTERY
-══════════════════════════════════════════ */
-function updateBattery(bat) {
-  S.fuelPct = Math.round(bat.level * 100);
-  renderFuel();
-}
-
-function renderFuel() {
-  if (S.fuelPct === null) return;
-  const el = document.getElementById('fuel-pct');
-  const bar = document.getElementById('fuel-bar');
-  el.textContent = S.fuelPct + '%';
-  bar.style.width = S.fuelPct + '%';
-  el.className = 'fuel-pct ' + (S.fuelPct < 20 ? 'crit' : S.fuelPct < 40 ? 'low' : '');
-  bar.style.background = S.fuelPct < 20 ? 'var(--red)' : S.fuelPct < 40 ? 'var(--amber)' : 'var(--g)';
-}
-
-/* ══════════════════════════════════════════
-   MAIN HUD RENDER LOOP
-══════════════════════════════════════════ */
-function startHUDLoop() {
-  let lastFrame = 0;
-  function frame(ts) {
-    const dt = ts - lastFrame;
-    lastFrame = ts;
-    if (dt > 0) update(dt / 1000);
-    render();
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-
-let simTime = 0;
-function update(dt) {
-  simTime += dt;
-
-  // Engine temp simulation (heat up when accelerating)
-  const throttle = S.gpsSpeed / 72;
-  S.engineTemp += (throttle * 120 - S.engineTemp + 80) * dt * 0.05;
-  S.engineTemp = Math.max(70, Math.min(110, S.engineTemp));
-
-  // Lock target simulation based on steady aim
-  const movement = Math.abs(S.ax) + Math.abs(S.ay);
-  if (movement < 1.5) {
-    S.lockPct = Math.min(100, S.lockPct + dt * 25);
-  } else {
-    S.lockPct = Math.max(0, S.lockPct - dt * 40);
-  }
-
-  // Simulate speed on desktop (no sensors)
-  if (!S.accelOk && !S.gpsOk) {
-    S.gpsSpeed = 25 + Math.sin(simTime * 0.3) * 20;
-    S.gForce = 1.0 + Math.abs(Math.sin(simTime * 0.5)) * 0.1;
-  }
-
-  // Simulate fuel if no battery API
-  if (S.fuelPct === null) {
-    S.fuelPct = Math.max(0, 78 - simTime * 0.01);
-    renderFuel();
-  }
-
-  // System status updates
-  updateSystemStatus();
-}
-
-function render() {
-  const heading = S.compassOk ? S.alpha : (simTime * 8) % 360;
-  const pitch   = S.gyroOk ? S.beta  : Math.sin(simTime * 0.4) * 8;
-  const roll    = S.gyroOk ? S.gamma : Math.sin(simTime * 0.3) * 5;
-
-  // ── COMPASS ──
-  updateCompassTape(heading);
-  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-  const dirName = dirs[Math.round(heading / 22.5) % 16];
-  document.getElementById('compass-heading').textContent =
-    `HDG ${Math.round(heading).toString().padStart(3,'0')}° ${dirName}`;
-  document.getElementById('bearing-dir').textContent =
-    Math.round(heading).toString().padStart(3,'0') + '°';
-
-  // ── GUN ELEVATION ──
-  // beta: positive = phone tilted forward = gun depressed
-  // negative = tilted back = gun elevated
-  const elev = -pitch; // invert so forward tilt = depression
-  const elevClamped = Math.max(-10, Math.min(20, elev)); // -10° to +20°
-  const elevPct = (elevClamped + 10) / 30; // 0=max depression, 1=max elevation
-  const elevTop = (1 - elevPct) * 100;
-  document.getElementById('elev-indicator').style.top = elevTop + '%';
-  document.getElementById('elev-value').textContent =
-    (elev >= 0 ? '+' : '') + elev.toFixed(1) + '°';
-
-  // ── RANGE READOUT ── (simplified ballistic calc)
-  const vel = 1650, mass = 4.8, Cd = 0.05;
-  const A = Math.PI * (0.06)**2;
-  const estRange = elevClamped > 0
-    ? Math.round((vel**2 * Math.sin(2 * elevClamped * Math.PI / 180)) / 9.81)
-    : 2000;
-  const rangeDisp = Math.min(5000, Math.max(200, estRange));
-  const vAtR = vel * Math.exp(-0.5 * Cd * 1.225 * A * rangeDisp / mass);
-  const tof  = rangeDisp / ((vel + vAtR) / 2);
-  document.getElementById('rr-range').textContent = 'RNG: ' + rangeDisp + 'm';
-  document.getElementById('rr-elev').textContent  = 'ELV: ' + elev.toFixed(1) + '°';
-  document.getElementById('rr-tof').textContent   = 'TOF: ' + tof.toFixed(2) + 's';
-
-  // ── RETICLE ROLL ── (reticle counter-rotates with device roll for stabilization)
-  const reticle = document.getElementById('reticle-group');
-  // Stabilized: counter-rotate by gamma
-  const stabilized = -roll * 0.5;
-  reticle.style.transform = `rotate(${stabilized}deg)`;
-  reticle.style.transformOrigin = '50px 50px';
-
-  // ── HORIZON LINE ──
-  document.getElementById('horizon-line').style.transform =
-    `translateY(-50%) rotate(${-roll}deg)`;
-
-  // ── LOCK RING ──
-  document.getElementById('lock-ring').className = S.lockPct >= 90 ? 'locked' : '';
-
-  // ── RIGHT PANEL ──
-  const speed = S.gpsOk ? S.gpsSpeed : S.gpsSpeed;
-  const spEl = document.getElementById('rp-speed');
-  spEl.textContent = Math.round(speed);
-  spEl.className = 'rp-val' + (speed > 60 ? ' amber' : '');
-
-  const gEl = document.getElementById('rp-g');
-  gEl.textContent = S.gForce.toFixed(2);
-  gEl.className = 'rp-val' + (S.gForce > 2 ? ' red' : S.gForce > 1.3 ? ' amber' : '');
-
-  document.getElementById('rp-roll').textContent = roll.toFixed(1) + '°';
-  const temp = Math.round(S.engineTemp);
-  const tEl  = document.getElementById('rp-temp');
-  tEl.textContent = temp + '°C';
-  tEl.className = 'rp-val' + (temp > 100 ? ' red' : temp > 90 ? ' amber' : '');
-}
-
-function updateSystemStatus() {
-  // Engine
-  const engEl = document.getElementById('sys-eng');
-  if (S.engineTemp > 105) { engEl.textContent = 'OVERHEAT'; engEl.className = 'sys-v crit'; }
-  else if (S.engineTemp > 95) { engEl.textContent = 'HOT'; engEl.className = 'sys-v warn'; }
-  else { engEl.textContent = 'NOMINAL'; engEl.className = 'sys-v ok'; }
-
-  // GPS signal
-  const comEl = document.getElementById('sys-com');
-  if (S.gpsOk) { comEl.textContent = 'GPS OK'; comEl.className = 'sys-v ok'; }
-  else { comEl.textContent = 'GPS—'; comEl.className = 'sys-v warn'; }
-
-  // Ammo warning
-  const amEl = document.getElementById('sb-ammo-type');
-  amEl.textContent = S.ammoType + ' ×' + S.ammo;
-  if (S.ammo <= 5) {
-    amEl.style.color = 'var(--red)';
-    document.getElementById('sys-trk').textContent = 'LOW AMMO';
-    document.getElementById('sys-trk').className = 'sys-v crit';
-  } else {
-    amEl.style.color = '';
-  }
-}
-
-/* ══════════════════════════════════════════
-   FIRE
-══════════════════════════════════════════ */
-const AMMO_RELOAD = {APFSDS:5000, HEAT:6000, 'HE-FRAG':4000, SMOKE:3000};
-let reloading = false;
-
-function fireGun(e) {
-  if (e) e.preventDefault();
-  if (reloading) return;
-  if (S.ammo <= 0) {
-    triggerAlert('AMMO DEPLETED');
-    return;
-  }
-  S.ammo--;
-  S.firing = true;
-  reloading = true;
-
-  // Visual
-  const flash = document.getElementById('fire-flash');
-  flash.classList.add('fired');
-  document.getElementById('fire-btn').classList.add('firing');
-
-  // Haptic feedback
-  if (navigator.vibrate) {
-    navigator.vibrate([60, 30, 40, 20, 80]);
-  }
-
-  setTimeout(() => { flash.classList.remove('fired'); }, 120);
-  setTimeout(() => {
-    document.getElementById('fire-btn').classList.remove('firing');
-  }, 200);
-
-  document.getElementById('ammo-count').textContent = S.ammo;
-
-  // Reload animation
-  const reloadTime = AMMO_RELOAD[S.ammoType] || 5000;
-  let reloadEl = document.getElementById('fire-btn');
-  let t = reloadTime;
-  const reloadInterval = setInterval(() => {
-    t -= 100;
-    const pct = Math.round((1 - t/reloadTime) * 100);
-    if (reloadEl) reloadEl.textContent = pct + '%';
-    if (t <= 0) {
-      clearInterval(reloadInterval);
-      reloading = false;
-      if (reloadEl) reloadEl.textContent = 'FIRE';
-    }
-  }, 100);
-
-  // Combat log
-  addModeText(`FIRED ${S.ammoType} | ${S.ammo} remaining`);
-}
-
-/* ══════════════════════════════════════════
-   IMPACT / HIT
-══════════════════════════════════════════ */
-function triggerImpact() {
-  S.hitCount++;
-  const flash = document.getElementById('impact-flash');
-  const threat = document.getElementById('threat-overlay');
-
-  flash.classList.add('hit');
-  threat.classList.add('active');
-  document.getElementById('hud').classList.add('shaking');
-
-  if (navigator.vibrate) {
-    navigator.vibrate([200, 50, 150, 50, 300]);
-  }
-
-  // Spawn particles
-  spawnImpactParticles();
-
-  // Random system damage
-  const systems = ['sys-trk','sys-com','tr-aps'];
-  const el = document.getElementById(systems[Math.floor(Math.random()*systems.length)]);
-  if (el) { el.textContent = 'DAMAGED'; el.className = 'sys-v crit'; }
-
-  setTimeout(() => {
-    flash.classList.remove('hit');
-    threat.classList.remove('active');
-    document.getElementById('hud').classList.remove('shaking');
-  }, 600);
-
-  setTimeout(() => {
-    if (el) { el.textContent = 'NOMINAL'; el.className = 'sys-v ok'; }
-  }, 4000);
-
-  addModeText('⚠ IMPACT DETECTED — HIT #' + S.hitCount);
-}
-
-function triggerAlert(msg) {
-  const threat = document.getElementById('threat-overlay');
-  document.getElementById('threat-text').textContent = '⚠ ' + msg + ' ⚠';
-  threat.classList.add('active');
-  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-  setTimeout(() => threat.classList.remove('active'), 2000);
-}
-
-/* ══════════════════════════════════════════
-   IMPACT PARTICLES
-══════════════════════════════════════════ */
-const shakeCanvas = document.getElementById('shake-canvas');
-const shakeCtx = shakeCanvas.getContext('2d');
-let particles = [];
-
-function resizeShakeCanvas() {
-  shakeCanvas.width = window.innerWidth;
-  shakeCanvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeShakeCanvas);
-resizeShakeCanvas();
-
-function spawnImpactParticles() {
-  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-  for (let i = 0; i < 60; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 8 + 2;
-    particles.push({
-      x: cx, y: cy,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: 1.0,
-      decay: Math.random() * 0.03 + 0.02,
-      size: Math.random() * 3 + 1,
-      color: Math.random() > 0.5 ? '#ff2020' : '#ffb000',
-    });
-  }
-}
-
-function animateParticles() {
-  shakeCtx.clearRect(0, 0, shakeCanvas.width, shakeCanvas.height);
-  particles = particles.filter(p => {
-    p.x += p.vx; p.y += p.vy;
-    p.vy += 0.2;
-    p.life -= p.decay;
-    shakeCtx.globalAlpha = p.life;
-    shakeCtx.fillStyle = p.color;
-    shakeCtx.shadowBlur = 6;
-    shakeCtx.shadowColor = p.color;
-    shakeCtx.beginPath();
-    shakeCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    shakeCtx.fill();
-    return p.life > 0;
-  });
-  shakeCtx.globalAlpha = 1;
-  shakeCtx.shadowBlur = 0;
-  requestAnimationFrame(animateParticles);
-}
-animateParticles();
-
-/* ══════════════════════════════════════════
-   AMMO SELECTION
-══════════════════════════════════════════ */
-function setAmmo(type, btn) {
-  S.ammoType = type === 'SMKE' ? 'SMOKE' : type;
-  S.ammo = S.ammoTypes[S.ammoType] || 20;
-  document.getElementById('ammo-count').textContent = S.ammo;
-  document.getElementById('ammo-type-disp').textContent = S.ammoType;
-  document.querySelectorAll('.ammo-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  document.getElementById('sb-ammo-type').textContent = S.ammoType;
-}
-
-/* ══════════════════════════════════════════
-   MINIMAP
-══════════════════════════════════════════ */
-const mm = document.getElementById('minimap-canvas');
-const mmCtx = mm.getContext('2d');
-let mmBasePos = null;  // {lat, lon} reference point
-const MM_SCALE = 5000; // pixels per degree (roughly)
-
-function buildMinimap() {
-  mmCtx.clearRect(0, 0, 100, 100);
-  mmCtx.fillStyle = '#020602';
-  mmCtx.fillRect(0, 0, 100, 100);
-  // Grid
-  mmCtx.strokeStyle = 'rgba(57,255,20,0.08)';
-  mmCtx.lineWidth = 0.5;
-  for (let i = 0; i <= 100; i += 20) {
-    mmCtx.beginPath(); mmCtx.moveTo(i,0); mmCtx.lineTo(i,100); mmCtx.stroke();
-    mmCtx.beginPath(); mmCtx.moveTo(0,i); mmCtx.lineTo(100,i); mmCtx.stroke();
-  }
-}
-
-function updateMinimapTrail() {
-  buildMinimap();
-  if (!S.lat || !S.lon) return;
-  if (!mmBasePos) mmBasePos = {lat: S.lat, lon: S.lon};
-
-  const latScale = 100000 * (S.lat - mmBasePos.lat);
-  const lonScale = 100000 * (S.lon - mmBasePos.lon);
-  const cx = 50 - lonScale;
-  const cy = 50 + latScale;
-
-  // Draw trail
-  if (S.gpsTrail.length > 1) {
-    mmCtx.beginPath();
-    mmCtx.strokeStyle = 'rgba(57,255,20,0.35)';
-    mmCtx.lineWidth = 1;
-    S.gpsTrail.forEach((pt, i) => {
-      const px = 50 - 100000 * (pt.lon - mmBasePos.lon);
-      const py = 50 + 100000 * (pt.lat - mmBasePos.lat);
-      if (i === 0) mmCtx.moveTo(px, py);
-      else mmCtx.lineTo(px, py);
-    });
-    mmCtx.stroke();
-  }
-
-  // Draw tank icon
-  const heading = S.alpha || 0;
-  mmCtx.save();
-  mmCtx.translate(cx, cy);
-  mmCtx.rotate(heading * Math.PI / 180);
-  // Tank body
-  mmCtx.fillStyle = '#39ff14';
-  mmCtx.shadowBlur = 6;
-  mmCtx.shadowColor = '#39ff14';
-  mmCtx.fillRect(-3, -4, 6, 8);
-  // Gun barrel
-  mmCtx.fillRect(-0.8, -8, 1.6, 6);
-  mmCtx.restore();
-
-  // Range ring
-  mmCtx.beginPath();
-  mmCtx.arc(cx, cy, 15, 0, Math.PI * 2);
-  mmCtx.strokeStyle = 'rgba(57,255,20,0.15)';
-  mmCtx.lineWidth = 0.5;
-  mmCtx.stroke();
-}
-
-function startMinimapLoop() {
-  setInterval(() => {
-    if (S.gyroOk || S.compassOk) {
-      buildMinimap();
-      updateMinimapTrail();
-    }
-  }, 500);
-}
-
-/* ══════════════════════════════════════════
-   CLOCK
-══════════════════════════════════════════ */
-function startClock() {
-  function tick() {
-    const now = new Date();
-    const t = [now.getHours(), now.getMinutes(), now.getSeconds()]
-      .map(n => String(n).padStart(2,'0')).join(':');
-    document.getElementById('sb-time').textContent = t;
-  }
-  tick();
-  setInterval(tick, 1000);
-}
-
-/* ══════════════════════════════════════════
-   STATUS BAR MODE TEXT
-══════════════════════════════════════════ */
-const modeQueue = [];
-let showingMode = false;
-function addModeText(msg) {
-  modeQueue.push(msg);
-  if (!showingMode) nextMode();
-}
-function nextMode() {
-  if (!modeQueue.length) { showingMode = false; return; }
-  showingMode = true;
-  document.getElementById('sb-mode').textContent = '◉ ' + modeQueue.shift();
-  setTimeout(() => {
-    document.getElementById('sb-mode').textContent = '◉ COMBAT READY';
-    setTimeout(nextMode, 200);
-  }, 2500);
-}
-
-/* ══════════════════════════════════════════
-   KEYBOARD (desktop fallback)
-══════════════════════════════════════════ */
-document.addEventListener('keydown', e => {
-  if (!document.getElementById('hud').classList.contains('active')) return;
-  if (e.code === 'Space') { e.preventDefault(); fireGun(null); }
-  if (e.code === 'KeyI') triggerImpact(); // test impact
-  if (e.code === 'KeyA') triggerAlert('INCOMING MISSILE');
-});
-
-/* ══════════════════════════════════════════
-   SIMULATE DESKTOP (if no sensors)
-══════════════════════════════════════════ */
-function simulateDesktop() {
-  let t = 0;
-  setInterval(() => {
-    t += 0.016;
-    if (!S.compassOk) {
-      S.alpha = (t * 10) % 360;
-      S.alphaSmooth = S.alpha;
-    }
-    if (!S.gyroOk) {
-      S.beta  = Math.sin(t * 0.5) * 12;
-      S.gamma = Math.sin(t * 0.3) * 8;
-      S.betaSmooth  = S.beta;
-      S.gammaSmooth = S.gamma;
-    }
-    if (!S.accelOk) {
-      S.gForce = 1.0 + Math.abs(Math.sin(t * 0.8)) * 0.15;
-    }
-  }, 16);
-}
-simulateDesktop();
-
-/* ══════════════════════════════════════════
-   TOUCH PREVENTION (no accidental scroll)
-══════════════════════════════════════════ */
-document.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
-</script>
 </body>
 </html>
